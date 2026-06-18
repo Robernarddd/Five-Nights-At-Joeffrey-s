@@ -1,0 +1,1015 @@
+/* =========================================================
+   FNAF ENTRE POTES — Feuille de style
+   PHASE 1 : Bureau + Interface
+   Ambiance sombre, rendu propre et "sérieux".
+   ========================================================= */
+
+/* ---------- Base / reset léger ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;            /* on évite la sélection de texte façon "jeu" */
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;             /* pas de scroll : on reste plein écran */
+  background: #000;
+  color: #d8d8d8;
+  font-family: "Courier New", Courier, monospace;  /* look terminal/sécurité */
+}
+
+/* ---------- Système d'écrans ---------- */
+/* Chaque écran occupe tout l'espace ; seul .active est visible. */
+.screen {
+  position: absolute;
+  inset: 0;                     /* top/right/bottom/left = 0 */
+  display: none;
+}
+.screen.active {
+  display: block;
+}
+
+/* =========================================================
+   ÉCRANS MENU / SÉLECTION / CRÉDITS / FIN
+   ========================================================= */
+/* Fond commun des écrans menu/fin (n'affecte pas la visibilité). */
+#menu-screen, #select-screen, #credits-screen,
+#win-screen, #gameover-screen {
+  background: radial-gradient(ellipse at 50% 40%, #15151c 0%, #050507 80%);
+}
+/* Centrage UNIQUEMENT quand l'écran est actif. On met le display ici (et non
+   sur l'ID seul) sinon la priorité des ID forcerait l'affichage en permanence
+   et tous les écrans se chevaucheraient. */
+#menu-screen.active, #select-screen.active, #credits-screen.active,
+#win-screen.active, #gameover-screen.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-box, .endscreen {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+  padding: 2rem;
+}
+
+/* Titre principal */
+.menu-title {
+  font-size: 5rem;
+  font-weight: bold;
+  letter-spacing: 0.5rem;
+  line-height: 0.9;
+  color: #e8e8e8;
+  text-shadow: 0 0 18px rgba(180, 180, 200, 0.25);
+  animation: title-flicker 4s infinite;
+}
+.menu-title span {
+  display: block;
+  font-size: 1.6rem;
+  letter-spacing: 0.9rem;
+  color: #8a8a96;
+  margin-top: 0.6rem;
+}
+/* Léger scintillement façon néon fatigué */
+@keyframes title-flicker {
+  0%, 100%   { opacity: 1; }
+  47%        { opacity: 1; }
+  48%        { opacity: 0.5; }
+  49%        { opacity: 1; }
+  73%        { opacity: 0.85; }
+  74%        { opacity: 1; }
+}
+
+.menu-subtitle {
+  font-size: 2rem;
+  letter-spacing: 0.4rem;
+  color: #d0d0d8;
+  margin-bottom: 0.4rem;
+}
+
+/* Boutons du menu */
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+.menu-buttons button,
+.menu-back,
+.night-btn {
+  font-family: inherit;
+  font-size: 1.3rem;
+  letter-spacing: 0.15rem;
+  color: #d8d8d8;
+  background: #15151b;
+  border: 2px solid #3a3a44;
+  padding: 0.7rem 2.4rem;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.menu-buttons button:hover,
+.menu-back:hover,
+.night-btn:hover:not(:disabled) {
+  background: #23232d;
+  border-color: #6a6a7a;
+  color: #fff;
+}
+.menu-buttons button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.menu-progress {
+  margin-top: 0.6rem;
+  font-size: 0.95rem;
+  color: #7a7a88;
+}
+.menu-back { font-size: 1.1rem; padding: 0.6rem 1.8rem; margin-top: 0.8rem; }
+
+/* Sélection de nuit */
+.night-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
+  max-width: 460px;
+}
+.night-btn { padding: 0.9rem 1.4rem; min-width: 5.5rem; }
+.night-btn .n-num { display: block; font-size: 1.6rem; font-weight: bold; }
+.night-btn .n-lock { display: block; font-size: 0.8rem; color: #7a7a88; }
+.night-btn:disabled .n-num { color: #555; }
+
+/* Écrans de fin */
+.big-time {
+  font-size: 4.5rem;
+  font-weight: bold;
+  letter-spacing: 0.3rem;
+  color: #f0f0f0;
+}
+.end-text { font-size: 1.4rem; color: #b8b8c2; }
+.gameover-text {
+  font-size: 4rem;
+  font-weight: bold;
+  letter-spacing: 0.4rem;
+  color: #c0303a;
+  text-shadow: 0 0 20px rgba(200, 40, 50, 0.4);
+}
+
+/* =========================================================
+   FILTRE VHS GLOBAL
+   Overlay fixe posé par-dessus tout le jeu (tous les écrans).
+   pointer-events: none -> n'intercepte jamais les clics.
+   Pour régler l'intensité : opacity de .vhs-noise et .vhs-scanlines.
+   ========================================================= */
+#vhs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;                /* au-dessus de tout (sauf futurs jumpscares) */
+  pointer-events: none;
+}
+/* Masqué sur certains écrans (le bureau pour l'instant) : classe posée en JS. */
+#vhs-overlay.off { display: none; }
+
+/* Statique VHS (bruit TV plein écran, grisé). */
+.vhs-noise {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.55;
+  mix-blend-mode: screen;       /* le bruit clair ressort sur le fond sombre */
+}
+
+/* Bande de distorsion horizontale qui défile lentement de haut en bas */
+.vhs-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 14%;
+  background: linear-gradient(
+    rgba(255,255,255,0) 0%,
+    rgba(220,220,220,0.08) 42%,
+    rgba(255,255,255,0.16) 50%,
+    rgba(220,220,220,0.08) 58%,
+    rgba(255,255,255,0) 100%);
+  mix-blend-mode: screen;
+  animation: vhs-band-move 7.5s linear infinite;
+}
+@keyframes vhs-band-move {
+  0%   { top: -16%; }
+  100% { top: 110%; }
+}
+
+/* Scanlines */
+.vhs-scanlines {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background: repeating-linear-gradient(
+    rgba(0,0,0,0) 0 2px, rgba(0,0,0,0.25) 2px 4px);
+}
+
+/* Vignette : assombrit les bords pour cadrer l'image (effet écran cathodique) */
+.vhs-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+}
+
+/* =========================================================
+   MENU PRINCIPAL — style FNAF
+   ========================================================= */
+#menu-screen {
+  background: #050505;
+  overflow: hidden;
+}
+
+/* Titre du jeu, empilé en haut à gauche */
+.fnaf-title {
+  position: absolute;
+  top: 6%;
+  left: 6%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.02;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: bold;
+  font-size: clamp(2.4rem, 6.8vw, 5.4rem);
+  letter-spacing: 0.04em;
+  color: #f2f2f2;
+  text-shadow: 0 0 3px rgba(0,0,0,0.85), 2px 1px 0 rgba(0,0,0,0.4);
+}
+
+/* Options du menu, alignées à gauche */
+.fnaf-menu {
+  position: absolute;
+  top: 52%;
+  left: 6.5%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.fnaf-item {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: "Courier New", Courier, monospace;
+  font-size: clamp(1.2rem, 2.6vw, 2rem);
+  letter-spacing: 0.06em;
+  color: #e6e6e6;
+  padding: 0.1rem 0 0.1rem 2.2em;   /* place réservée pour le curseur >> */
+  text-shadow: 0 0 4px rgba(0,0,0,0.9);
+  transition: color 0.1s;
+}
+/* Curseur ">>" qui apparaît devant l'option survolée */
+.fnaf-item::before {
+  content: ">>";
+  position: absolute;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.05s;
+}
+.fnaf-item:hover { color: #fff; }
+.fnaf-item:hover::before { opacity: 1; }
+.fnaf-item:disabled { color: #5a5a5a; cursor: not-allowed; }
+.fnaf-item:disabled:hover::before { opacity: 0; }
+
+/* Mentions en bas d'écran */
+.menu-foot {
+  position: absolute;
+  bottom: 3%;
+  z-index: 3;
+  font-family: "Courier New", Courier, monospace;
+  font-size: clamp(0.7rem, 1.3vw, 1rem);
+  letter-spacing: 0.1em;
+  color: #d0d0d0;
+  text-shadow: 0 0 3px rgba(0,0,0,0.9);
+}
+.menu-foot-left  { left: 1.6%; }
+.menu-foot-right { right: 1.6%; }
+
+/* =========================================================
+   ÉCRAN BUREAU (panoramique)
+   ========================================================= */
+
+/* La "fenêtre" visible : tout ce qui dépasse est masqué. */
+#office-view {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: ew-resize;            /* indique qu'on peut "tourner la tête" G/D */
+}
+
+/* Le monde large qui défile. Largeur = hauteur écran * ratio de office.jpg
+   (2560/1080) -> plus large que l'écran 16:9, donc il y a du défilement.
+   min-width:100% évite un trou sur les écrans très larges. */
+#office-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: calc(100vh * (2560 / 1080));
+  min-width: 100%;
+  will-change: transform;       /* défilement fluide (translateX via JS) */
+}
+
+/* Décor de fond. office.jpg est posé en premier ; si le fichier n'existe pas
+   encore, le dégradé en dessous reste visible (placeholder). */
+#office-background {
+  position: absolute;
+  inset: 0;
+  background:
+    url("assets/images/office/office.jpg") center / cover no-repeat,
+    radial-gradient(ellipse at 50% 120%, #1a1a22 0%, #0a0a0d 70%, #000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.placeholder-label {
+  font-size: 3.5rem;
+  letter-spacing: 0.3rem;
+  color: #2a2a33;
+  font-weight: bold;
+  padding: 0 3rem;
+}
+.placeholder-left,
+.placeholder-right { font-size: 2rem; color: #33333f; }
+
+/* ---------- Embrasures + volets (Phase 3) ---------- */
+/* Une embrasure couvre toute la hauteur, à l'extrémité du bureau.
+   z-index 3 : derrière les boutons (z-index 5), qui restent cliquables. */
+.doorway {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 15%;
+  z-index: 3;
+  overflow: hidden;        /* cache le volet quand il est relevé */
+}
+#door-left  { left: 0; }
+#door-right { right: 0; }
+
+/* Le couloir entrevu par l'embrasure (placeholder sombre par défaut). */
+.hallway {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(180deg, #0a0a0e 0 22px, #070709 22px 44px),
+    linear-gradient(90deg, #000 0%, #141420 50%, #000 100%);
+  filter: brightness(1);
+  transition: filter 0.06s;
+}
+/* Lumière allumée : le couloir s'éclaire (hall_left_lit.png le remplacera). */
+.doorway.lit .hallway {
+  filter: brightness(2.8) contrast(1.05);
+}
+/* Halo lumineux quand la lumière est allumée. */
+.doorway.lit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 45%, rgba(255, 244, 200, 0.18) 0%, rgba(255,244,200,0) 70%);
+}
+
+/* Silhouette d'un animatronique posté au bout du couloir (au "corner").
+   Placée AVANT le volet => le volet la recouvre si la porte est fermée.
+   Visible uniquement quand la lumière du couloir est allumée. */
+.occupant {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 8%;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.doorway.lit .occupant.present { display: flex; }  /* révélé par la lumière */
+.occupant .silhouette {
+  position: relative;
+  width: 58%;
+  height: 82%;
+  background:
+    radial-gradient(circle at 50% 22%, #44444e 0%, #1a1a22 55%),
+    linear-gradient(#101015 0%, #26262e 100%);
+  border-radius: 45% 45% 14% 14% / 30% 30% 12% 12%;
+  box-shadow: inset 0 0 40px #000, 0 0 24px rgba(0,0,0,0.7);
+}
+.occupant .silhouette::before,
+.occupant .silhouette::after {
+  content: "";
+  position: absolute;
+  top: 18%;
+  width: 9%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 10px #fff;
+}
+.occupant .silhouette::before { left: 33%; }
+.occupant .silhouette::after  { right: 33%; }
+.occupant .occ-name {
+  position: absolute;
+  top: 4%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-weight: bold;
+  letter-spacing: 0.25em;
+  color: #d83a3a;
+  text-shadow: 0 0 8px rgba(0,0,0,0.9);
+}
+
+/* Le volet métallique : caché au-dessus, descend pour fermer la porte. */
+.shutter {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100%;
+  transform: translateY(-100%);
+  transition: transform 0.35s cubic-bezier(0.3, 0.8, 0.4, 1);
+  background:
+    repeating-linear-gradient(180deg, #2a2a30 0 14px, #1c1c22 14px 16px),
+    linear-gradient(90deg, #15151a, #34343c 50%, #15151a);
+  border-bottom: 4px solid #4a4a54;
+  box-shadow: inset 0 -10px 20px rgba(0,0,0,0.6);
+}
+/* Porte fermée : le volet descend et couvre l'embrasure. */
+.doorway.closed .shutter { transform: translateY(0); }
+
+/* ---------- Côtés (porte + lumière) ---------- */
+.side {
+  position: absolute;
+  bottom: 18%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  z-index: 5;
+}
+.side-left  { left: 4%;  align-items: flex-start; }
+.side-right { right: 4%; align-items: flex-end; }
+
+/* ---------- Boutons façon panneau de contrôle ---------- */
+.door-btn,
+.light-btn {
+  font-family: inherit;
+  font-weight: bold;
+  letter-spacing: 0.15rem;
+  color: #cfcfcf;
+  background: #15151b;
+  border: 2px solid #3a3a44;
+  padding: 0.7rem 1.1rem;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.door-btn:hover:not(:disabled),
+.light-btn:hover:not(:disabled) {
+  background: #23232d;
+  border-color: #5a5a6a;
+}
+
+/* État actif (porte fermée / lumière allumée) — utilisé dès Phase 3/4 */
+.door-btn.active   { background: #4a1313; border-color: #7a2020; color: #ffd9d9; }
+.light-btn.active  { background: #4a4413; border-color: #7a7320; color: #fff7c2; }
+
+/* Désactivé (phases pas encore implémentées) */
+button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   HUD / INTERFACE
+   ========================================================= */
+
+/* Horloge en haut à droite.
+   z-index 25 : reste visible AU-DESSUS du moniteur caméras (z-index 20). */
+#hud-time {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.6rem;
+  z-index: 25;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #f0f0f0;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
+}
+
+/* Bloc énergie en bas à gauche.
+   z-index 25 : visible aussi pendant la surveillance caméra, pour gérer
+   la consommation en direct. */
+#hud-power {
+  position: absolute;
+  bottom: 1.4rem;
+  left: 1.6rem;
+  z-index: 25;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.95);
+}
+.power-line { display: flex; align-items: center; gap: 0.5rem; }
+.power-label { color: #9a9a9a; }
+#power-value { color: #6ad06a; font-weight: bold; }   /* vert quand ça va */
+
+/* Barres de consommation (façon FNAF) */
+.usage-bars {
+  color: #6ad06a;
+  letter-spacing: 0.1rem;
+  font-weight: bold;
+}
+
+/* Avertissements énergie : classes posées par le JS en Phase 5 */
+#hud-power.low  #power-value,
+#hud-power.low  .usage-bars { color: #e0b020; }
+#hud-power.crit #power-value,
+#hud-power.crit .usage-bars { color: #d04040; }
+
+/* Barre de bascule des caméras, en bas au centre.
+   z-index 40 : reste AU-DESSUS du moniteur (z-index 20) pour pouvoir le baisser
+   au survol. Le survol de cette barre lève/baisse le moniteur (cf. script.js). */
+#cam-flip {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 42%;
+  height: 7%;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  cursor: pointer;
+  font-weight: bold;
+  letter-spacing: 0.25em;
+  color: #c8c8d0;
+  background: linear-gradient(rgba(18,18,24,0) 0%, rgba(18,18,24,0.85) 100%);
+  border-top: 1px solid #3a3a44;
+  transition: background 0.15s, color 0.15s;
+}
+#cam-flip:hover {
+  color: #fff;
+  background: linear-gradient(rgba(34,34,46,0) 0%, rgba(40,40,54,0.96) 100%);
+}
+/* Flèches de part et d'autre du label : vers le haut (lever) ou bas (baisser). */
+#cam-flip::before,
+#cam-flip::after {
+  content: "▲";
+  font-size: 0.85em;
+}
+#cam-flip.up::before,
+#cam-flip.up::after {
+  content: "▼";
+}
+
+/* =========================================================
+   MONITEUR CAMÉRAS (Phase 2)
+   Superposé au bureau quand on lève le moniteur.
+   ========================================================= */
+#monitor {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: #050507;
+  padding: 2.5%;
+}
+
+/* Animation "on lève le moniteur" : il bascule depuis le bas (rotateX) en
+   montant, avec un flash lumineux. transform-origin en bas = pivot au niveau
+   des genoux, comme si on relevait une tablette. */
+#monitor:not(.hidden) {
+  transform-origin: 50% 100%;
+  animation: monitor-up 0.28s cubic-bezier(0.18, 0.7, 0.25, 1);
+}
+@keyframes monitor-up {
+  0% {
+    opacity: 0.2;
+    transform: perspective(1400px) rotateX(72deg) translateY(28%) scale(0.94);
+    filter: brightness(2.4);
+  }
+  55% { opacity: 1; }
+  100% {
+    opacity: 1;
+    transform: perspective(1400px) rotateX(0deg) translateY(0) scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* Flash de grésillement intense au moment où le moniteur se lève
+   (le bruit vidéo monte fort puis retombe à son niveau normal). */
+#monitor:not(.hidden) #cam-static {
+  animation:
+    static-flicker 0.2s steps(2) infinite,
+    static-burst 0.32s ease-out;
+}
+@keyframes static-burst {
+  0%   { opacity: 0.55; }
+  100% { opacity: 0.06; }
+}
+
+/* Légère bascule aussi quand on change de caméra (effet de rafraîchissement). */
+#cam-feed.switching #cam-static { animation: static-burst 0.22s ease-out, static-flicker 0.2s steps(2) infinite; }
+
+/* ---------- Flux vidéo de la caméra ---------- */
+#cam-feed {
+  position: absolute;
+  inset: 2.5%;
+  background: #000;
+  border: 2px solid #1c1c24;
+  overflow: hidden;
+}
+
+/* Zone image : placeholder dessous, vraie image <img> par-dessus si dispo. */
+#cam-image-holder {
+  position: absolute;
+  inset: 0;
+}
+
+/* Placeholder affiché tant que la vraie image n'existe pas. */
+.cam-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  background: repeating-linear-gradient(
+      45deg, #0c0c12 0 18px, #0a0a0f 18px 36px);
+  color: #3a3a48;
+  text-align: center;
+}
+.cam-placeholder .cam-ph-id   { font-size: 3.2rem; font-weight: bold; letter-spacing: 0.3rem; color: #4a4a5c; }
+.cam-placeholder .cam-ph-name { font-size: 1.6rem; letter-spacing: 0.25rem; }
+.cam-placeholder .cam-ph-zone {
+  margin-top: 0.6rem;
+  font-size: 0.95rem;
+  color: #2f2f3a;
+  border: 1px dashed #2f2f3a;
+  padding: 0.5rem 1.4rem;
+}
+
+/* Animatroniques visibles dans le flux caméra courant. */
+#cam-occupants {
+  position: absolute;
+  inset: 0;
+  z-index: 4;                    /* au-dessus du placeholder et du grésillement */
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6%;
+}
+.cam-occupant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+.cam-occupant .occ-figure {
+  position: relative;
+  width: 5.5rem;
+  height: 8.5rem;
+  background:
+    radial-gradient(circle at 50% 26%, #55555f 0%, #20202a 55%),
+    linear-gradient(#17171d, #30303a);
+  border-radius: 46% 46% 18% 18% / 30% 30% 12% 12%;
+  box-shadow: inset 0 0 30px #000, 0 0 20px rgba(0,0,0,0.6);
+}
+/* Deux yeux blancs lumineux */
+.cam-occupant .occ-figure::before,
+.cam-occupant .occ-figure::after {
+  content: "";
+  position: absolute;
+  top: 30%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 7px #fff;
+}
+.cam-occupant .occ-figure::before { left: 33%; }
+.cam-occupant .occ-figure::after  { right: 33%; }
+.cam-occupant .occ-name {
+  font-weight: bold;
+  letter-spacing: 0.2em;
+  color: #fff;
+  background: rgba(0,0,0,0.6);
+  padding: 0.15rem 0.7rem;
+  text-shadow: 0 0 6px #000;
+}
+.cam-occupant .occ-stage {
+  font-size: 0.8rem;
+  letter-spacing: 0.15em;
+  color: #e0b020;
+  text-shadow: 0 0 6px #000;
+}
+
+/* Vraie image de caméra (couvre le placeholder quand elle charge). */
+.cam-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Grésillement vidéo ---------- */
+#cam-static {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: repeating-radial-gradient(
+      circle at 50% 50%, #fff 0 1px, transparent 1px 2px);
+  background-size: 3px 3px;
+  animation: static-flicker 0.2s steps(2) infinite;
+}
+@keyframes static-flicker {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(-2px, 1px); }
+}
+
+/* Léger balayage horizontal type vieux moniteur. */
+#cam-feed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+      rgba(255,255,255,0.02) 50%, rgba(0,0,0,0.12) 50%);
+  background-size: 100% 4px;
+}
+
+/* ---------- Étiquettes ---------- */
+#cam-label {
+  position: absolute;
+  top: 1rem;
+  left: 1.2rem;
+  z-index: 2;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #e8e8e8;
+  text-shadow: 0 0 5px rgba(0,0,0,0.9);
+}
+#cam-rec {
+  position: absolute;
+  top: 1rem;
+  right: 1.2rem;
+  z-index: 2;
+  font-size: 1rem;
+  color: #e23b3b;
+  letter-spacing: 0.1rem;
+  animation: rec-blink 1.2s steps(1) infinite;
+}
+@keyframes rec-blink { 50% { opacity: 0.15; } }
+
+/* ---------- Carte de sélection (look FNAF) ---------- */
+#cam-map {
+  position: absolute;
+  right: 3%;
+  bottom: 9%;                    /* dégagé au-dessus de la barre de bascule */
+  width: 34%;
+  max-width: 440px;
+  aspect-ratio: 970 / 800;     /* même proportion que la map originale */
+  z-index: 3;
+  background: rgba(20, 20, 24, 0.9);
+  border: 2px solid #3a3a44;
+  box-shadow: 0 0 24px rgba(0,0,0,0.7);
+}
+#cam-map-title {
+  position: absolute;
+  top: 0.4rem;
+  left: 0.6rem;
+  z-index: 4;
+  font-size: 0.85rem;
+  color: #6a6a7a;
+  letter-spacing: 0.2rem;
+}
+#cam-map-buttons {
+  position: absolute;
+  inset: 0;
+}
+
+/* Calque SVG : local central + couloirs (sous les boîtes). */
+#cam-map-paths {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;        /* les clics passent vers les boutons */
+}
+.cam-room {
+  fill: none;
+  stroke: #9a9aa6;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+.cam-path {
+  fill: none;
+  stroke: #9a9aa6;             /* lignes claires comme dans le jeu */
+  stroke-width: 1.5;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;  /* épaisseur constante malgré l'étirement */
+}
+
+/* Petites cabines sans caméra. */
+.cam-deco {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--h);
+  transform: translate(-50%, -50%);
+  border: 1.5px solid #9a9aa6;
+  background: #15151b;
+}
+
+/* Repère du bureau ("YOU" + carré blanc). */
+#cam-map-office {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  z-index: 4;
+}
+.you-label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 0.15rem;
+  color: #e8e8e8;
+}
+.you-square {
+  width: 0.8rem;
+  height: 0.8rem;
+  background: #f0f0f0;
+}
+
+/* Boîtes CAM (deux lignes), positionnées via --x / --y. */
+.cam-btn {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  font-family: inherit;
+  font-weight: bold;
+  color: #eaeaea;
+  background: #15151b;
+  border: 2px solid #e0e0e6;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s, border-color 0.1s, box-shadow 0.1s;
+}
+.cam-btn-top { font-size: 0.7rem; }
+.cam-btn-id  { font-size: 1rem; }
+.cam-btn:hover { background: #26262e; }
+.cam-btn.active {
+  background: #243a24;
+  border-color: #5ad05a;
+  box-shadow: 0 0 8px rgba(90, 208, 90, 0.5);  /* caméra en cours de visionnage */
+}
+
+/* =========================================================
+   JUMPSCARE (Phase 10)
+   ========================================================= */
+#jumpscare {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;                /* au-dessus de tout, même le filtre VHS */
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+/* Tremblement + sursauts pendant l'attaque. */
+#jumpscare.active { animation: js-shake 0.07s steps(2) infinite; }
+@keyframes js-shake {
+  0%   { transform: translate(-1.5%, -1.5%) scale(1.06); }
+  50%  { transform: translate(1.5%, 1%)  scale(1.13); }
+  100% { transform: translate(-1%, 1.5%) scale(1.04); }
+}
+/* Flash lumineux clignotant. */
+#jumpscare.active::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  mix-blend-mode: overlay;
+  animation: js-flash 0.12s steps(2) infinite;
+}
+@keyframes js-flash { 0%,100% { opacity: 0; } 50% { opacity: 0.3; } }
+
+/* Vraie image du jumpscare (si fournie). */
+#jumpscare-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Visage placeholder (tant qu'aucune image n'est fournie). */
+#jumpscare-face {
+  position: relative;
+  width: 42vmin;
+  height: 54vmin;
+  background: radial-gradient(circle at 50% 34%, #3c3c46 0%, #0b0b0f 72%);
+  border-radius: 46% 46% 30% 30%;
+  box-shadow: inset 0 0 70px #000;
+}
+.js-eyes {
+  position: absolute;
+  top: 28%;
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  padding: 0 16%;
+}
+.js-eyes span {
+  width: 6.5vmin;
+  height: 6.5vmin;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 20px #fff, 0 0 50px #fff;
+}
+.js-mouth {
+  position: absolute;
+  bottom: 14%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 54%;
+  height: 16%;
+  background: repeating-linear-gradient(90deg, #fff 0 7%, #1a1a1a 7% 14%);
+  border-radius: 8% 8% 45% 45%;
+}
+#jumpscare-name {
+  position: absolute;
+  bottom: 4%;
+  width: 100%;
+  text-align: center;
+  font-weight: bold;
+  font-size: 2rem;
+  letter-spacing: 0.35em;
+  color: #c0303a;
+  text-shadow: 0 0 14px rgba(200,40,50,0.6);
+  z-index: 2;
+}
+
+/* =========================================================
+   PANNE DE COURANT — écran noir + yeux
+   ========================================================= */
+#blackout {
+  position: fixed;
+  inset: 0;
+  z-index: 9500;
+  background: #000;
+}
+.blackout-eyes {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 7vmin;
+}
+.blackout-eyes span {
+  width: 2.6vmin;
+  height: 2.6vmin;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 16px #fff;
+  opacity: 0;
+  animation: eyes-appear 2s ease-in forwards;
+}
+@keyframes eyes-appear { 0%, 65% { opacity: 0; } 100% { opacity: 0.9; } }
+
+/* =========================================================
+   UTILITAIRES
+   ========================================================= */
+.hidden { display: none !important; }

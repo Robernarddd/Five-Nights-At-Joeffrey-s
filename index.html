@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Five Nights at Joeffrey's</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!--
+    PHASE 1 — Bureau + Interface
+    Pour l'instant, un seul écran est affiché : le bureau (#office-screen).
+    Les écrans Menu, Caméras, Victoire et Game Over seront ajoutés dans les
+    phases suivantes. On garde donc une structure « à écrans » dès maintenant :
+    chaque écran est une <section class="screen"> que l'on montre/cache via la
+    classe .active (voir style.css et script.js -> Screens).
+  -->
+
+  <!-- ============ MENU PRINCIPAL (style FNAF / VHS) ============ -->
+  <!-- Le filtre VHS (statique + scanlines + bande) est désormais GLOBAL :
+       voir #vhs-overlay en bas du body. -->
+  <section id="menu-screen" class="screen active">
+
+    <!-- Titre du jeu, empilé en haut à gauche -->
+    <h1 class="fnaf-title">
+      <span>Five</span>
+      <span>Nights</span>
+      <span>at</span>
+      <span>Joeffrey's</span>
+    </h1>
+
+    <!-- Options du menu -->
+    <nav class="fnaf-menu">
+      <button id="btn-new" class="fnaf-item">New Game</button>
+      <button id="btn-continue" class="fnaf-item">Continue</button>
+      <button id="btn-select" class="fnaf-item">Night Select</button>
+      <button id="btn-credits" class="fnaf-item">Credits</button>
+    </nav>
+
+    <!-- Mentions bas d'écran -->
+    <div class="menu-foot menu-foot-left">v 0.5</div>
+    <div class="menu-foot menu-foot-right">© Les Potes</div>
+  </section>
+
+  <!-- ============ SÉLECTION DE NUIT ============ -->
+  <section id="select-screen" class="screen">
+    <div class="menu-box">
+      <h2 class="menu-subtitle">SÉLECTION DE NUIT</h2>
+      <div id="night-list" class="night-list"></div>
+      <button class="menu-back" data-back>← Retour</button>
+    </div>
+  </section>
+
+  <!-- ============ CRÉDITS ============ -->
+  <section id="credits-screen" class="screen">
+    <div class="menu-box">
+      <h2 class="menu-subtitle">CRÉDITS</h2>
+      <div class="credits-text">
+        <p>Five Nights at Joeffrey's</p>
+        <p>Fangame inspiré de Five Nights at Freddy's.</p>
+        <p>Vous incarnez&nbsp;: Vincent</p>
+        <p>Animatroniques&nbsp;: Whizip · Nolan · Sidané · Joeffrey</p>
+      </div>
+      <button class="menu-back" data-back>← Retour</button>
+    </div>
+  </section>
+
+  <!-- ============ VICTOIRE (6 AM) ============ -->
+  <section id="win-screen" class="screen">
+    <div class="endscreen">
+      <div class="big-time">06:00 AM</div>
+      <div id="win-text" class="end-text"></div>
+      <button class="menu-back" data-back>Menu</button>
+    </div>
+  </section>
+
+  <!-- ============ GAME OVER ============ -->
+  <section id="gameover-screen" class="screen">
+    <div class="endscreen">
+      <div class="gameover-text">GAME OVER</div>
+      <button class="menu-back" data-back>Menu</button>
+    </div>
+  </section>
+
+  <!-- ============ ÉCRAN BUREAU ============ -->
+  <section id="office-screen" class="screen">
+
+    <!--
+      Vue du bureau panoramique.
+      #office-view  = la "fenêtre" visible (overflow caché).
+      #office-world = le monde large (2560x1080) qui DÉFILE horizontalement
+                      selon la position de la souris (cf. module Pan dans script.js).
+      Les portes/lumières sont placées AUX EXTRÉMITÉS du monde : elles défilent
+      donc avec le décor, comme dans le vrai FNAF.
+    -->
+    <div id="office-view">
+      <div id="office-world">
+
+        <!-- Décor de fond : office.jpg quand il existe, sinon placeholder CSS -->
+        <div id="office-background">
+          <span class="placeholder-label placeholder-left">◄ PORTE GAUCHE</span>
+          <span class="placeholder-label">BUREAU</span>
+          <span class="placeholder-label placeholder-right">PORTE DROITE ►</span>
+        </div>
+
+        <!-- Embrasures aux extrémités : le couloir (placeholder) + le volet
+             métallique qui descend quand la porte est fermée (Phase 3).
+             door_left_closed.png viendra recouvrir le .shutter plus tard. -->
+        <div id="door-left" class="doorway">
+          <div class="hallway"></div>
+          <div class="occupant"><div class="silhouette"></div><div class="occ-name"></div></div>
+          <div class="shutter"></div>
+        </div>
+        <div id="door-right" class="doorway">
+          <div class="hallway"></div>
+          <div class="occupant"><div class="silhouette"></div><div class="occ-name"></div></div>
+          <div class="shutter"></div>
+        </div>
+
+        <!-- Porte + lumière gauche -->
+        <div class="side side-left">
+          <button class="light-btn" data-side="left">LUMIÈRE</button>
+          <button class="door-btn" data-side="left">PORTE</button>
+        </div>
+
+        <!-- Porte + lumière droite -->
+        <div class="side side-right">
+          <button class="light-btn" data-side="right">LUMIÈRE</button>
+          <button class="door-btn" data-side="right">PORTE</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============ HUD / INTERFACE ============ -->
+
+    <!-- Horloge de la nuit (00:00 -> 06:00) -->
+    <div id="hud-time">
+      <span id="clock">00:00</span>
+    </div>
+
+    <!-- Indicateur d'énergie -->
+    <div id="hud-power">
+      <div class="power-line">
+        <span class="power-label">Énergie&nbsp;:</span>
+        <span id="power-value">100</span><span>%</span>
+      </div>
+      <div class="power-line">
+        <span class="power-label">Conso.&nbsp;:</span>
+        <span id="power-usage" class="usage-bars">▮</span>
+      </div>
+    </div>
+
+    <!-- Barre de bascule des caméras : le survol lève/baisse le moniteur
+         (comme dans FNAF). Reste au-dessus du moniteur pour pouvoir le baisser. -->
+    <div id="cam-flip">
+      <span id="cam-flip-label">CAMÉRAS</span>
+    </div>
+
+    <!-- ============ MONITEUR CAMÉRAS (Phase 2) ============ -->
+    <!-- Superposé au bureau ; masqué tant qu'on ne lève pas le moniteur. -->
+    <div id="monitor" class="hidden">
+
+      <!-- Flux de la caméra courante -->
+      <div id="cam-feed">
+        <!-- Placeholder + vraie image injectés par le module Cameras -->
+        <div id="cam-image-holder"></div>
+        <!-- Animatroniques présents dans la salle (injectés par AI/Cameras) -->
+        <div id="cam-occupants"></div>
+        <!-- Grésillement / bruit vidéo pour l'ambiance -->
+        <div id="cam-static"></div>
+        <!-- Étiquette nom + id de la caméra -->
+        <div id="cam-label"></div>
+        <div id="cam-rec">● REC</div>
+      </div>
+
+      <!-- Carte de sélection des caméras (boutons injectés par le JS) -->
+      <div id="cam-map">
+        <div id="cam-map-title">CAM</div>
+        <div id="cam-map-buttons"></div>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- ============ PANNE DE COURANT (séquence) ============ -->
+  <!-- Écran noir avec deux yeux qui apparaissent, avant le jumpscare. -->
+  <div id="blackout" class="hidden">
+    <div class="blackout-eyes"><span></span><span></span></div>
+  </div>
+
+  <!-- ============ JUMPSCARE ============ -->
+  <!-- Surgit par-dessus tout. Affiche l'image du pote (assets/images/jumpscares/
+       <id>.png) si elle existe, sinon le visage placeholder dessiné en CSS. -->
+  <div id="jumpscare" class="hidden">
+    <div id="jumpscare-face">
+      <div class="js-eyes"><span></span><span></span></div>
+      <div class="js-mouth"></div>
+    </div>
+    <img id="jumpscare-img" class="hidden" alt="" />
+    <div id="jumpscare-name"></div>
+  </div>
+
+  <!-- ============ FILTRE VHS GLOBAL ============ -->
+  <!-- Posé par-dessus TOUT le jeu (fixe, plein écran, ne capte pas la souris).
+       S'applique donc à tous les écrans, actuels et futurs. -->
+  <div id="vhs-overlay">
+    <!-- Statique VHS animée (vrai bruit TV via filtre SVG feTurbulence) -->
+    <svg class="vhs-noise" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <filter id="vhs-filter">
+        <!-- baseFrequency X plus basse que Y => grain légèrement étiré à
+             l'horizontale, comme une bande VHS. -->
+        <feTurbulence type="fractalNoise" baseFrequency="0.6 0.9" numOctaves="3" stitchTiles="stitch">
+          <animate attributeName="seed" dur="0.45s" calcMode="discrete"
+                   values="1;3;5;7;9;11;13;15" repeatCount="indefinite" />
+        </feTurbulence>
+        <feColorMatrix type="saturate" values="0" />
+        <!-- Boost de contraste : speckles plus marqués (noir et blanc). -->
+        <feComponentTransfer>
+          <feFuncR type="linear" slope="1.8" intercept="-0.35" />
+          <feFuncG type="linear" slope="1.8" intercept="-0.35" />
+          <feFuncB type="linear" slope="1.8" intercept="-0.35" />
+        </feComponentTransfer>
+      </filter>
+      <rect width="100%" height="100%" filter="url(#vhs-filter)" />
+    </svg>
+    <!-- Bande de distorsion horizontale qui défile -->
+    <div class="vhs-band"></div>
+    <!-- Scanlines -->
+    <div class="vhs-scanlines"></div>
+    <!-- Vignette sombre pour cadrer l'image -->
+    <div class="vhs-vignette"></div>
+  </div>
+
+  <script src="data/nights.js"></script>
+  <script src="data/cameras.js"></script>
+  <script src="data/animatronics.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
