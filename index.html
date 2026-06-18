@@ -185,6 +185,32 @@
 
   </section>
 
+  <!-- ============ MENU PAUSE (touche Échap) ============ -->
+  <div id="pause" class="hidden">
+    <div class="pause-box">
+      <h2 class="pause-title">PAUSE</h2>
+      <button id="pause-resume" class="pause-btn">Reprendre</button>
+
+      <div class="pause-settings">
+        <div class="setting-row">
+          <span>Son</span>
+          <button id="pause-mute" class="setting-toggle">Activé</button>
+        </div>
+        <div class="setting-row">
+          <span>Volume</span>
+          <input id="pause-volume" type="range" min="0" max="100" />
+        </div>
+        <div class="setting-row">
+          <span>Filtre VHS</span>
+          <button id="pause-vhs" class="setting-toggle">Activé</button>
+        </div>
+      </div>
+
+      <button id="pause-menu" class="pause-btn pause-quit">Menu principal</button>
+      <p class="pause-hint">Échap pour reprendre</p>
+    </div>
+  </div>
+
   <!-- ============ PANNE DE COURANT (séquence) ============ -->
   <!-- Écran noir avec deux yeux qui apparaissent, avant le jumpscare. -->
   <div id="blackout" class="hidden">

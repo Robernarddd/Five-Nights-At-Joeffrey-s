@@ -81,6 +81,286 @@ const Save = {
 };
 
 /* =========================================================
+   Sound — audio du jeu, entièrement synthétisé (Web Audio).
+   Aucun fichier requis. Un fichier réel (assets/sounds/...) pourra plus tard
+   remplacer un effet, mais par défaut tout est généré ici.
+   - sons ponctuels : Sound.play("nom")
+   - boucles        : Sound.startLoop("nom") / stopLoop("nom")
+   - mute + volume persistants (localStorage), réglés via le menu pause
+   ========================================================= */
+const Sound = {
+  ctx: null,
+  master: null,
+  muted: false,
+  volume: 0.6,
+  loops: {},
+  KEY: "fnaf_joeffrey_muted",
+  VOLKEY: "fnaf_joeffrey_volume",
+
+  init() {
+    try {
+      this.muted = localStorage.getItem(this.KEY) === "1";
+      const v = parseFloat(localStorage.getItem(this.VOLKEY));
+      if (!isNaN(v)) this.volume = Math.min(1, Math.max(0, v));
+    } catch (e) {}
+    // Le navigateur exige une interaction avant de jouer du son : on relance
+    // le contexte au premier geste — SAUF en pause (sinon cliquer dans le menu
+    // pause réveillerait l'audio qu'on vient justement de suspendre).
+    const resume = () => { if (!GameState.paused) this.resume(); };
+    window.addEventListener("pointerdown", resume);
+    window.addEventListener("keydown", resume);
+  },
+
+  ensure() {
+    if (!this.ctx) {
+      const C = window.AudioContext || window.webkitAudioContext;
+      if (!C) return null;
+      this.ctx = new C();
+      this.master = this.ctx.createGain();
+      this.master.gain.value = this.muted ? 0 : this.volume;
+      this.master.connect(this.ctx.destination);
+    }
+    return this.ctx;
+  },
+  resume() {
+    const c = this.ensure();
+    if (c && c.state === "suspended") c.resume();
+  },
+  suspend() {
+    if (this.ctx && this.ctx.state === "running") this.ctx.suspend();
+  },
+
+  setMute(m) {
+    this.muted = m;
+    try { localStorage.setItem(this.KEY, m ? "1" : "0"); } catch (e) {}
+    if (this.master) this.master.gain.value = m ? 0 : this.volume;
+  },
+  toggleMute() { this.setMute(!this.muted); },
+  setVolume(v) {
+    this.volume = Math.min(1, Math.max(0, v));
+    try { localStorage.setItem(this.VOLKEY, String(this.volume)); } catch (e) {}
+    if (this.master && !this.muted) this.master.gain.value = this.volume;
+  },
+
+  // Effet ponctuel.
+  play(name) {
+    if (this.muted) return;
+    const c = this.ensure();
+    if (!c) return;
+    this.resume();
+    const gen = this["sfx_" + name];
+    if (gen) gen.call(this, c, this.master);
+  },
+
+  // Boucles (démarrées même en sourdine : le master à 0 les rend muettes).
+  startLoop(name) {
+    if (this.loops[name]) return;
+    const c = this.ensure();
+    if (!c) return;
+    this.resume();
+    const gen = this["loop_" + name];
+    if (gen) this.loops[name] = gen.call(this, c, this.master);
+  },
+  stopLoop(name) {
+    const h = this.loops[name];
+    if (!h) return;
+    try { h.stop(); } catch (e) {}
+    delete this.loops[name];
+  },
+  stopAllLoops() {
+    Object.keys(this.loops).forEach((n) => this.stopLoop(n));
+  },
+
+  /* ---- Helpers ---- */
+  _noise(c, dur, loop) {
+    const len = Math.max(1, Math.floor(c.sampleRate * dur));
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    if (loop) src.loop = true;
+    return src;
+  },
+  _melody(c, out, notes, timbre) {
+    const t0 = c.currentTime;
+    let t = t0;
+    notes.forEach(([freq, dur]) => {
+      if (freq) {
+        const o = c.createOscillator();
+        o.type = timbre || "triangle";
+        o.frequency.value = freq;
+        const g = c.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur * 0.92);
+        o.connect(g);
+        g.connect(out);
+        o.start(t);
+        o.stop(t + dur);
+      }
+      t += dur;
+    });
+  },
+
+  /* ---- Effets ponctuels ---- */
+  sfx_camSwitch(c, out) {
+    const t = c.currentTime;
+    const o = c.createOscillator();
+    o.type = "square";
+    o.frequency.value = 760;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.1, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.09);
+  },
+  _kachunk(c, out, hi) {
+    const t = c.currentTime;
+    const n = this._noise(c, 0.12);
+    const lp = c.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 1200;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.3, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    n.connect(lp); lp.connect(g); g.connect(out); n.start(t); n.stop(t + 0.12);
+    const o = c.createOscillator();
+    o.type = "square";
+    o.frequency.setValueAtTime(hi ? 220 : 160, t);
+    o.frequency.exponentialRampToValueAtTime(hi ? 120 : 80, t + 0.1);
+    const og = c.createGain();
+    og.gain.setValueAtTime(0.14, t);
+    og.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    o.connect(og); og.connect(out); o.start(t); o.stop(t + 0.12);
+  },
+  sfx_camOpen(c, out) { this._kachunk(c, out, true); },
+  sfx_camClose(c, out) { this._kachunk(c, out, false); },
+
+  _door(c, out, thudFrom, thudTo) {
+    const t = c.currentTime;
+    const o = c.createOscillator();
+    o.type = "sine";
+    o.frequency.setValueAtTime(thudFrom, t);
+    o.frequency.exponentialRampToValueAtTime(thudTo, t + 0.18);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.6, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.26);
+    const n = this._noise(c, 0.16);
+    const hp = c.createBiquadFilter();
+    hp.type = "highpass"; hp.frequency.value = 1600;
+    const ng = c.createGain();
+    ng.gain.setValueAtTime(0.22, t);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+    n.connect(hp); hp.connect(ng); ng.connect(out); n.start(t); n.stop(t + 0.16);
+  },
+  sfx_doorClose(c, out) { this._door(c, out, 150, 48); },
+  sfx_doorOpen(c, out) { this._door(c, out, 90, 130); },
+
+  sfx_foxyRun(c, out) {
+    const t0 = c.currentTime;
+    for (let i = 0; i < 8; i++) {
+      const t = t0 + i * 0.085;
+      const n = this._noise(c, 0.06);
+      const hp = c.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 1100;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.2, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      n.connect(hp); hp.connect(g); g.connect(out); n.start(t); n.stop(t + 0.06);
+    }
+  },
+
+  sfx_freddyLaugh(c, out) {
+    const t0 = c.currentTime;
+    const o = c.createOscillator();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(210, t0);
+    o.frequency.linearRampToValueAtTime(150, t0 + 1.0);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    for (let i = 0; i < 5; i++) {
+      const t = t0 + i * 0.18;             // "ha ha ha..."
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.2, t + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    }
+    o.connect(g); g.connect(out); o.start(t0); o.stop(t0 + 1.0);
+  },
+
+  // Mélodie de panne (boîte à musique inquiétante, type Toreador, domaine public).
+  sfx_powerOutMusic(c, out) {
+    const N = { A4: 440, B4: 494, C5: 523, D5: 587, E5: 659, F5: 698, G5: 784, A5: 880 };
+    this._melody(c, out, [
+      [N.A4, 0.3], [N.E5, 0.3], [N.D5, 0.3], [N.C5, 0.3],
+      [N.B4, 0.45], [0, 0.15], [N.A4, 0.3], [N.C5, 0.3],
+      [N.E5, 0.3], [N.A5, 0.6],
+    ], "triangle");
+  },
+
+  // Carillon de victoire (6 AM).
+  sfx_victory(c, out) {
+    this._melody(c, out, [
+      [523, 0.16], [659, 0.16], [784, 0.16], [1047, 0.5],
+    ], "sine");
+  },
+
+  // Cri du jumpscare.
+  sfx_scream(c, out) {
+    const dur = 0.9;
+    const t0 = c.currentTime;
+    const n = this._noise(c, dur);
+    const bp = c.createBiquadFilter();
+    bp.type = "bandpass"; bp.frequency.value = 1100; bp.Q.value = 0.6;
+    const o1 = c.createOscillator();
+    o1.type = "sawtooth";
+    o1.frequency.setValueAtTime(240, t0);
+    o1.frequency.exponentialRampToValueAtTime(70, t0 + dur);
+    const o2 = c.createOscillator();
+    o2.type = "square";
+    o2.frequency.setValueAtTime(360, t0);
+    o2.frequency.exponentialRampToValueAtTime(110, t0 + dur);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.8, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    n.connect(bp); bp.connect(g); o1.connect(g); o2.connect(g); g.connect(out);
+    n.start(t0); o1.start(t0); o2.start(t0);
+    n.stop(t0 + dur); o1.stop(t0 + dur); o2.stop(t0 + dur);
+  },
+
+  /* ---- Boucles ---- */
+  loop_hum(c, out) {
+    const src = this._noise(c, 1, true);
+    const lp = c.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 220;
+    const g = c.createGain(); g.gain.value = 0.06;
+    const o = c.createOscillator(); o.type = "sine"; o.frequency.value = 60;
+    const og = c.createGain(); og.gain.value = 0.04;
+    src.connect(lp); lp.connect(g); g.connect(out);
+    o.connect(og); og.connect(out);
+    src.start(); o.start();
+    return { stop() { try { src.stop(); } catch (e) {} try { o.stop(); } catch (e) {} } };
+  },
+  loop_static(c, out) {
+    const src = this._noise(c, 1, true);
+    const bp = c.createBiquadFilter();
+    bp.type = "bandpass"; bp.frequency.value = 3000; bp.Q.value = 0.5;
+    const g = c.createGain(); g.gain.value = 0.035;
+    src.connect(bp); bp.connect(g); g.connect(out); src.start();
+    return { stop() { try { src.stop(); } catch (e) {} } };
+  },
+  loop_lightBuzz(c, out) {
+    const o = c.createOscillator(); o.type = "sawtooth"; o.frequency.value = 120;
+    const lp = c.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 900;
+    const g = c.createGain(); g.gain.value = 0.05;
+    o.connect(lp); lp.connect(g); g.connect(out); o.start();
+    return { stop() { try { o.stop(); } catch (e) {} } };
+  },
+};
+
+/* =========================================================
    Screens — montre un écran, cache les autres
    ========================================================= */
 const Screens = {
@@ -99,9 +379,12 @@ const Screens = {
    ========================================================= */
 const VHS = {
   el: null,
+  userEnabled: true,             // préférence joueur (réglages pause)
+  KEY: "fnaf_joeffrey_vhs",
 
   init() {
     this.el = document.getElementById("vhs-overlay");
+    try { this.userEnabled = localStorage.getItem(this.KEY) !== "0"; } catch (e) {}
     this.update();
   },
 
@@ -110,9 +393,15 @@ const VHS = {
     const officeActive = document
       .getElementById("office-screen")
       .classList.contains("active");
-    // Affiché si on n'est pas dans le bureau, OU si le moniteur est levé.
-    const show = !officeActive || GameState.cameraOpen;
+    // Affiché si la préférence est ON, et (hors bureau OU moniteur levé).
+    const show = this.userEnabled && (!officeActive || GameState.cameraOpen);
     this.el.classList.toggle("off", !show);
+  },
+
+  setEnabled(on) {
+    this.userEnabled = on;
+    try { localStorage.setItem(this.KEY, on ? "1" : "0"); } catch (e) {}
+    this.update();
   },
 };
 
@@ -122,6 +411,7 @@ const VHS = {
 const GameState = {
   night: 1,          // nuit en cours
   running: false,    // la nuit est-elle active ?
+  paused: false,     // menu pause ouvert (Échap) ?
   elapsed: 0,        // temps réel écoulé dans la nuit (secondes)
   power: CONFIG.power.start,
 
@@ -133,6 +423,7 @@ const GameState = {
   reset(night) {
     this.night = night;
     this.running = false;
+    this.paused = false;
     this.elapsed = 0;
     this.power = CONFIG.power.start;
     this.doors  = { left: false, right: false };
@@ -292,6 +583,7 @@ const Doors = {
     GameState.doors[side] = !GameState.doors[side];
     this.render(side);
     Power.update();                        // la conso change immédiatement
+    Sound.play(GameState.doors[side] ? "doorClose" : "doorOpen");
   },
 
   // Met l'affichage (bouton + volet) en accord avec l'état du jeu.
@@ -339,6 +631,9 @@ const Lights = {
     GameState.lights[side] = next;
     this.render(side);
     Power.update();                  // la conso change immédiatement
+    // Buzz fluorescent tant qu'au moins une lumière est allumée.
+    if (GameState.lights.left || GameState.lights.right) Sound.startLoop("lightBuzz");
+    else Sound.stopLoop("lightBuzz");
   },
 
   render(side) {
@@ -457,7 +752,10 @@ const Cameras = {
       btn.style.setProperty("--x", cam.map.x + "%");
       btn.style.setProperty("--y", cam.map.y + "%");
       btn.dataset.id = cam.id;
-      btn.addEventListener("click", () => this.select(cam.id));
+      btn.addEventListener("click", () => {
+        Sound.play("camSwitch");
+        this.select(cam.id);
+      });
       container.appendChild(btn);
     });
   },
@@ -477,6 +775,8 @@ const Cameras = {
     this.select(this.current);       // (ré)affiche la dernière caméra vue
     Power.update();                  // la conso caméra apparaît tout de suite
     VHS.update();                    // effet VHS visible sur les caméras
+    Sound.play("camOpen");
+    Sound.startLoop("static");       // souffle vidéo pendant la surveillance
   },
 
   lower() {
@@ -487,6 +787,8 @@ const Cameras = {
     this.flipLabelEl.textContent = "CAMÉRAS";
     Power.update();
     VHS.update();                    // retour au bureau : pas de VHS
+    Sound.stopLoop("static");
+    Sound.play("camClose");
   },
 
   // Sélectionne une caméra et affiche son flux.
@@ -740,6 +1042,7 @@ const AI = {
       if (act.stage >= 3) {
         act.running = true;                   // il sort du rideau et fonce
         act.runTimer = act.def.runTime;
+        Sound.play("foxyRun");
         console.log("[IA] Sidané FONCE vers la porte gauche !");
       } else {
         console.log(`[IA] Sidané passe en état ${act.stage}.`);
@@ -751,6 +1054,8 @@ const AI = {
   onMoved(act) {
     const room = this.roomOf(act);
     if (act.def.type !== "foxy") console.log(`[IA] ${act.def.name} -> ${room}`);
+    // Joeffrey (Freddy) ricane quand il bouge.
+    if (act.def.id === "joeffrey") Sound.play("freddyLaugh");
     this.renderAll();
   },
 
@@ -811,13 +1116,14 @@ const Jumpscare = {
     }, 1100);
   },
 
-  // Son : tente le fichier du pote, sinon cri synthétisé.
+  // Son : tente le fichier du pote, sinon cri synthétisé (via Sound, qui
+  // respecte le mute global).
   playSound(def) {
     let handled = false;
     const fallback = () => {
       if (handled) return;
       handled = true;
-      this.screech();
+      Sound.play("scream");
     };
     try {
       const audio = new Audio(`assets/sounds/jumpscares/${def.id}.mp3`);
@@ -829,55 +1135,75 @@ const Jumpscare = {
       fallback();
     }
   },
+};
 
-  // Cri d'horreur généré (bruit filtré + oscillateurs descendants).
-  screech() {
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return;
-      const ctx = new Ctx();
-      const dur = 0.9;
-      const t0 = ctx.currentTime;
+/* =========================================================
+   Pause — menu pause (Échap) : reprendre, réglages, retour menu
+   Met le jeu en pause (temps, IA, énergie via GameState.paused ; audio suspendu).
+   ========================================================= */
+const Pause = {
+  el: null,
 
-      // Bruit blanc filtré.
-      const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-      const noise = ctx.createBufferSource();
-      noise.buffer = buf;
-      const bp = ctx.createBiquadFilter();
-      bp.type = "bandpass";
-      bp.frequency.value = 1100;
-      bp.Q.value = 0.6;
+  init() {
+    this.el = document.getElementById("pause");
 
-      // Deux oscillateurs qui plongent dans les graves.
-      const o1 = ctx.createOscillator();
-      o1.type = "sawtooth";
-      o1.frequency.setValueAtTime(240, t0);
-      o1.frequency.exponentialRampToValueAtTime(70, t0 + dur);
-      const o2 = ctx.createOscillator();
-      o2.type = "square";
-      o2.frequency.setValueAtTime(360, t0);
-      o2.frequency.exponentialRampToValueAtTime(110, t0 + dur);
+    document.getElementById("pause-resume").addEventListener("click", () => this.close());
+    document.getElementById("pause-menu").addEventListener("click", () => Game.quitToMenu());
 
-      // Enveloppe : attaque sèche puis extinction.
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(0.7, t0 + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    // Son (mute)
+    document.getElementById("pause-mute").addEventListener("click", () => {
+      Sound.toggleMute();
+      this.refresh();
+    });
+    // Volume
+    document.getElementById("pause-volume").addEventListener("input", (e) => {
+      Sound.setVolume(e.target.value / 100);
+    });
+    // Filtre VHS
+    document.getElementById("pause-vhs").addEventListener("click", () => {
+      VHS.setEnabled(!VHS.userEnabled);
+      this.refresh();
+    });
 
-      noise.connect(bp);
-      bp.connect(g);
-      o1.connect(g);
-      o2.connect(g);
-      g.connect(ctx.destination);
+    // Échap : ouvre/ferme le menu pause.
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") this.toggle();
+    });
+  },
 
-      noise.start(t0); o1.start(t0); o2.start(t0);
-      noise.stop(t0 + dur); o1.stop(t0 + dur); o2.stop(t0 + dur);
-      setTimeout(() => { try { ctx.close(); } catch (e) {} }, (dur + 0.2) * 1000);
-    } catch (e) {
-      /* Web Audio indisponible : pas de son */
-    }
+  toggle() {
+    if (GameState.paused) this.close();
+    else this.open();
+  },
+
+  open() {
+    if (!GameState.running || GameState.paused) return;
+    GameState.paused = true;
+    Sound.suspend();                 // fige l'audio (bourdonnement, etc.)
+    this.refresh();
+    this.el.classList.remove("hidden");
+  },
+
+  close() {
+    if (!GameState.paused) return;
+    GameState.paused = false;
+    this.el.classList.add("hidden");
+    Sound.resume();                  // reprend l'audio
+  },
+
+  // Met l'UI des réglages en accord avec l'état courant.
+  refresh() {
+    const mute = document.getElementById("pause-mute");
+    mute.textContent = Sound.muted ? "Coupé" : "Activé";
+    mute.classList.toggle("on", !Sound.muted);
+    mute.classList.toggle("off", Sound.muted);
+
+    document.getElementById("pause-volume").value = Math.round(Sound.volume * 100);
+
+    const vhs = document.getElementById("pause-vhs");
+    vhs.textContent = VHS.userEnabled ? "Activé" : "Désactivé";
+    vhs.classList.toggle("on", VHS.userEnabled);
+    vhs.classList.toggle("off", !VHS.userEnabled);
   },
 };
 
@@ -890,6 +1216,7 @@ const Game = {
   // Initialise les modules, démarre la boucle, et affiche le menu principal.
   init() {
     Save.load();
+    Sound.init();
     VHS.init();
     Clock.init();
     Power.init();
@@ -898,6 +1225,7 @@ const Game = {
     Lights.init();
     Cameras.init();
     Jumpscare.init();
+    Pause.init();
     Menu.init();
 
     // La boucle tourne en permanence ; tick() ne s'exécute que pendant une nuit.
@@ -916,6 +1244,11 @@ const Game = {
     AI.init(night);
     Clock.update();
     Power.update();
+
+    // Ambiance : bourdonnement du bureau pendant toute la nuit.
+    Sound.stopAllLoops();
+    Sound.resume();
+    Sound.startLoop("hum");
   },
 
   // Boucle appelée à chaque frame ; dt = secondes depuis la frame précédente.
@@ -926,7 +1259,7 @@ const Game = {
     const dt = (timestamp - this.lastTime) / 1000;
     this.lastTime = timestamp;
 
-    if (GameState.running) {
+    if (GameState.running && !GameState.paused) {
       this.tick(dt);
     }
 
@@ -967,6 +1300,8 @@ const Game = {
     GameState.running = false;
     Cameras.lower();
     AI.reset();
+    Sound.stopAllLoops();
+    Sound.play("victory");
 
     // Déblocage de la nuit suivante + écran de victoire 6 AM.
     const n = GameState.night;
@@ -976,6 +1311,18 @@ const Game = {
       ? `Nuit ${n} terminée — tu as survécu à toutes les nuits, bravo !`
       : `Nuit ${n} terminée ! Nuit ${n + 1} débloquée.`;
     Screens.show("win-screen");
+  },
+
+  // Abandonne la nuit et revient au menu principal (depuis la pause).
+  quitToMenu() {
+    GameState.running = false;
+    GameState.paused = false;
+    document.getElementById("pause").classList.add("hidden");
+    Cameras.lower();
+    AI.reset();
+    Sound.stopAllLoops();
+    Sound.resume();
+    Menu.show();
   },
 
   // Un animatronique est entré dans le bureau : jumpscare puis Game Over.
@@ -998,7 +1345,9 @@ const Game = {
     Doors.refresh();
     Lights.refresh();
 
-    // Séquence de panne : écran noir + yeux, puis jumpscare de Joeffrey.
+    // Séquence de panne : écran noir + yeux + musique, puis jumpscare de Joeffrey.
+    Sound.stopAllLoops();
+    Sound.play("powerOutMusic");
     const blackout = document.getElementById("blackout");
     blackout.classList.remove("hidden");
     const killer = getAnimatronic("joeffrey") || { id: "joeffrey", name: "Joeffrey" };
@@ -1014,7 +1363,7 @@ const Game = {
     GameState.running = false;
     Cameras.lower();
     AI.reset();
-    // (Phase 10) le jumpscare s'intercalera ici, avant l'écran Game Over.
+    Sound.stopAllLoops();
     Screens.show("gameover-screen");
   },
 };
