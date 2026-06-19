@@ -377,6 +377,36 @@ const Sound = {
 };
 
 /* =========================================================
+   Sprites — images de personnage des potes (caméras / portes / fenêtres).
+   Charge assets/images/animatronics/<id>.png si présent ; sinon on garde la
+   silhouette par défaut. (Le jumpscare utilise un autre dossier.)
+   ========================================================= */
+const Sprites = {
+  base: {},   // id -> url (uniquement ceux qui existent)
+
+  init() {
+    ANIMATRONICS.forEach((a) => {
+      const url = `assets/images/animatronics/${a.id}.png`;
+      const img = new Image();
+      img.onload = () => { this.base[a.id] = url; };
+      img.src = url;
+    });
+  },
+
+  // Applique la photo du pote `id` sur un élément silhouette, si elle existe.
+  apply(el, id) {
+    if (!el) return;
+    if (this.base[id]) {
+      el.classList.add("has-photo");
+      el.style.backgroundImage = `url("${this.base[id]}")`;
+    } else {
+      el.classList.remove("has-photo");
+      el.style.backgroundImage = "";
+    }
+  },
+};
+
+/* =========================================================
    Screens — montre un écran, cache les autres
    ========================================================= */
 const Screens = {
@@ -684,6 +714,7 @@ const Cameras = {
   flipLabelEl: null,
   lastFlip: 0,
   current: DEFAULT_CAMERA,
+  scrambledUntil: {},   // id de caméra -> timestamp de fin de brouillage
 
   init() {
     this.monitorEl = document.getElementById("monitor");
@@ -830,6 +861,27 @@ const Cameras = {
 
     this.render(cam);
     this.updateOccupants();
+    this.applyScramble();    // une caméra peut être brouillée au moment où on l'ouvre
+  },
+
+  // Brouille les caméras `roomIds` pendant 3 s (pote en déplacement) : si on en
+  // regarde une, on ne voit plus rien le temps qu'il "change de salle".
+  scramble(roomIds) {
+    const until = performance.now() + 3000;
+    roomIds.filter(Boolean).forEach((id) => {
+      if (CAMERAS.some((c) => c.id === id)) this.scrambledUntil[id] = until;
+    });
+    this.applyScramble();
+    setTimeout(() => this.applyScramble(), 3050);  // ré-évalue à la fin
+  },
+
+  // Active/désactive l'affichage brouillé selon la caméra visionnée.
+  applyScramble() {
+    if (!this.feedEl) return;
+    const on =
+      GameState.cameraOpen &&
+      (this.scrambledUntil[this.current] || 0) > performance.now();
+    this.feedEl.classList.toggle("scrambled", on);
   },
 
   // Affiche les animatroniques présents dans la caméra actuellement visionnée.
@@ -849,6 +901,7 @@ const Cameras = {
       el.innerHTML =
         `<div class="occ-figure"></div><div class="occ-name">${def.name}</div>${stage}`;
       holder.appendChild(el);
+      Sprites.apply(el.querySelector(".occ-figure"), def.id);
     });
   },
 
@@ -1012,8 +1065,10 @@ const AI = {
     if (roll > act.level) return;             // échec : il reste sur place
 
     const lastIndex = act.def.path.length - 1;
+    const fromRoom = this.roomOf(act);        // salle quittée (avant le déplacement)
     if (act.index < lastIndex) {
       act.index++;                            // avance d'une salle
+      Cameras.scramble([fromRoom, this.roomOf(act)]);  // brouille les 2 caméras
       this.onMoved(act);
       // Arrivé au corner (juste à côté de la porte) : coups sourds d'alerte.
       if (act.index === lastIndex) Sound.play("knock");
@@ -1021,6 +1076,7 @@ const AI = {
       // Au corner : tentative d'entrée dans le bureau.
       if (GameState.doors[act.def.door]) {
         act.index = 0;                        // porte fermée -> il repart
+        Cameras.scramble([fromRoom, this.roomOf(act)]);
         this.onMoved(act);
       } else {
         Game.caught(act.def);                 // porte ouverte -> attaque
@@ -1095,6 +1151,7 @@ const AI = {
         occEl.querySelector(".occ-name").textContent = here
           .map((a) => a.def.name)
           .join(" · ");
+        Sprites.apply(occEl.querySelector(".silhouette"), here[0].def.id);
       }
     });
     // Petites fenêtres : un pote dans le couloir (2A à gauche, 4A à droite) y
@@ -1109,6 +1166,7 @@ const AI = {
         winOcc.querySelector(".occ-name").textContent = here
           .map((a) => a.def.name)
           .join(" · ");
+        Sprites.apply(winOcc.querySelector(".silhouette"), here[0].def.id);
       }
     });
 
@@ -1289,6 +1347,7 @@ const Game = {
   init() {
     Save.load();
     Sound.init();
+    Sprites.init();
     VHS.init();
     Clock.init();
     Power.init();
@@ -1427,11 +1486,11 @@ const Game = {
     const killer = getAnimatronic("joeffrey") || { id: "joeffrey", name: "Joeffrey" };
     const blackout = document.getElementById("blackout");
     const boImg = document.getElementById("blackout-img");
-    // Vraie image de Joeffrey dans l'embrasure si elle existe, sinon silhouette.
+    // Image de BASE de Joeffrey dans l'embrasure si elle existe, sinon silhouette.
     boImg.classList.add("hidden");
     boImg.onload = () => boImg.classList.remove("hidden");
     boImg.onerror = () => boImg.classList.add("hidden");
-    boImg.src = `assets/images/jumpscares/${killer.id}.png`;
+    boImg.src = `assets/images/animatronics/${killer.id}.png`;
     const figure = document.getElementById("blackout-figure");
     figure.classList.remove("hidden");
     blackout.classList.remove("hidden");

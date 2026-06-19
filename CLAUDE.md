@@ -50,6 +50,11 @@ The loop (`Game.tick`) follows the spec order: **AI → energy → doors/lights/
 - **Placeholders are rendered in the DOM, not baked as files**: a styled box shows until the real image loads on top (CSS layering for the office; `<img>` `onload`/`onerror` for cameras). Dropping the real file at the documented path replaces the placeholder with **zero code change** — never commit stand-in image files.
 - Claude cannot generate art. The user supplies base room images + transparent friend cut-outs; Claude handles all dynamic states (lights, closed doors, power-out, placing friends) **in code**, not as separate baked images.
 
+**Two image types per friend (both optional, drop-in):**
+- **Character/base** `assets/images/animatronics/<id>.png` — transparent cut-out shown wherever they *appear* (cameras, doorway/window occupants, power-out doorway figure). Loaded by the `Sprites` module (preloads at init; `Sprites.apply(el, id)` swaps a CSS silhouette for the photo via background-image + `.has-photo` class which hides the drawn eyes/shape). Falls back to the CSS silhouette if absent. (Joeffrey provided.)
+- **Jumpscare** `assets/images/jumpscares/<id>.png` — the screamer face shown over the office on capture. `Jumpscare.loadFace()` auto-keys an opaque (checkerboard) background to transparent; transparent PNGs used as-is. Name is never shown (recognizable face). (Whizip provided.)
+- ids are lowercase ascii: `whizip`, `nolan`, `sidane`, `joeffrey`.
+
 ## What this is
 
 A browser-based FNAF 1 fangame titled **"Five Nights at Joeffrey's"**: horror gameplay played straight, but the animatronics are replaced by custom PNGs of the creator's friends. Gameplay should stay close to the original FNAF 1. The main menu mimics the FNAF 1 menu (stacked title top-left, `>>` hover cursor, English item labels); other screens are in French.
