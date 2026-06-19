@@ -874,15 +874,15 @@ const Cameras = {
     this.applyScramble();    // une caméra peut être brouillée au moment où on l'ouvre
   },
 
-  // Brouille les caméras `roomIds` pendant 3 s (pote en déplacement) : si on en
+  // Brouille les caméras `roomIds` pendant 1 s (pote en déplacement) : si on en
   // regarde une, on ne voit plus rien le temps qu'il "change de salle".
   scramble(roomIds) {
-    const until = performance.now() + 3000;
+    const until = performance.now() + 1000;
     roomIds.filter(Boolean).forEach((id) => {
       if (CAMERAS.some((c) => c.id === id)) this.scrambledUntil[id] = until;
     });
     this.applyScramble();
-    setTimeout(() => this.applyScramble(), 3050);  // ré-évalue à la fin
+    setTimeout(() => this.applyScramble(), 1050);  // ré-évalue à la fin
   },
 
   // Active/désactive l'affichage brouillé selon la caméra visionnée.

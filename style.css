@@ -716,6 +716,8 @@ button:disabled {
   background: #000;
   border: 2px solid #1c1c24;
   overflow: hidden;
+  z-index: 1;                     /* contexte d'empilement propre : le brouillage
+                                     interne reste SOUS la carte (clics OK) */
 }
 
 /* Zone image : placeholder dessous, vraie image <img> par-dessus si dispo. */
@@ -806,6 +808,7 @@ button:disabled {
   position: absolute;
   inset: 0;
   z-index: 5;                    /* au-dessus de l'image et des occupants */
+  pointer-events: none;          /* purement visuel : ne bloque aucun clic */
   display: none;
   background:
     repeating-radial-gradient(circle at 50% 50%,
