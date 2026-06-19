@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Five Nights at Joeffrey's</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=15" />
 </head>
 <body>
 
@@ -97,12 +97,8 @@
     <div id="office-view">
       <div id="office-world">
 
-        <!-- Décor de fond : office.jpg quand il existe, sinon placeholder CSS -->
-        <div id="office-background">
-          <span class="placeholder-label placeholder-left">◄ PORTE GAUCHE</span>
-          <span class="placeholder-label">BUREAU</span>
-          <span class="placeholder-label placeholder-right">PORTE DROITE ►</span>
-        </div>
+        <!-- Décor de fond : office.png (le vrai bureau FNAF, 2560x1080) -->
+        <div id="office-background"></div>
 
         <!-- Embrasures aux extrémités : le couloir (placeholder) + le volet
              métallique qui descend quand la porte est fermée (Phase 3).
@@ -116,6 +112,18 @@
           <div class="hallway"></div>
           <div class="occupant"><div class="silhouette"></div><div class="occ-name"></div></div>
           <div class="shutter"></div>
+        </div>
+
+        <!-- Petites fenêtres latérales : on y voit les potes du couloir
+             (2A à gauche, 4A à droite) quand la lumière du côté est allumée.
+             Positions provisoires, à caler sur l'image. -->
+        <div id="window-left" class="window">
+          <div class="win-light"></div>
+          <div class="win-occupant"><div class="silhouette"></div><div class="occ-name"></div></div>
+        </div>
+        <div id="window-right" class="window">
+          <div class="win-light"></div>
+          <div class="win-occupant"><div class="silhouette"></div><div class="occ-name"></div></div>
         </div>
 
         <!-- Porte + lumière gauche -->
@@ -260,9 +268,9 @@
     <div class="vhs-vignette"></div>
   </div>
 
-  <script src="data/nights.js"></script>
-  <script src="data/cameras.js"></script>
-  <script src="data/animatronics.js"></script>
-  <script src="script.js"></script>
+  <script src="data/nights.js?v=15"></script>
+  <script src="data/cameras.js?v=15"></script>
+  <script src="data/animatronics.js?v=15"></script>
+  <script src="script.js?v=15"></script>
 </body>
 </html>

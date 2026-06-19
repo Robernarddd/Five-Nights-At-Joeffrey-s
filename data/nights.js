@@ -5,20 +5,23 @@
    Ce fichier est volontairement séparé pour rester facile à équilibrer.
    ========================================================= */
 
-// Les clés correspondent aux id dans data/animatronics.js :
-//   whizip (ex-Bonnie), nolan (ex-Chica), sidane (ex-Foxy), joeffrey (ex-Freddy).
-// sidane/joeffrey seront actifs une fois ces persos ajoutés (Phases 8-9).
+// Niveaux d'IA (0 = inactif, 20 = max) par nuit, équilibrés pour une montée
+// progressive. Clés = id dans data/animatronics.js :
+//   whizip (gauche, agressif) · nolan (droite, régulier)
+//   sidane (Pirate Cove -> gauche, par états) · joeffrey (droite, lent/sournois)
+// Rappel des côtés : GAUCHE = whizip + sidane, DROITE = nolan + joeffrey.
 const NIGHTS = [
-  // Night 1
-  { id: 1, ai: { whizip: 2,  nolan: 1,  joeffrey: 0,  sidane: 0  } },
-  // Night 2
-  { id: 2, ai: { whizip: 4,  nolan: 3,  joeffrey: 1,  sidane: 1  } },
-  // Night 3
-  { id: 3, ai: { whizip: 6,  nolan: 5,  joeffrey: 2,  sidane: 3  } },
-  // Night 4
-  { id: 4, ai: { whizip: 8,  nolan: 8,  joeffrey: 5,  sidane: 5  } },
-  // Night 5
-  { id: 5, ai: { whizip: 12, nolan: 12, joeffrey: 10, sidane: 10 } },
+  // N1 — Tutoriel : seuls deux marcheurs lents (un par côté). Sidané et Joeffrey
+  // dorment. Largement survivable, le temps d'apprendre portes/caméras/énergie.
+  { id: 1, ai: { whizip: 3,  nolan: 2,  joeffrey: 0,  sidane: 0  } },
+  // N2 — Sidané se réveille (apprentissage de Pirate Cove) ; Joeffrey s'amorce.
+  { id: 2, ai: { whizip: 5,  nolan: 4,  joeffrey: 1,  sidane: 2  } },
+  // N3 — Les quatre sont actifs et modérés : la vraie partie commence.
+  { id: 3, ai: { whizip: 7,  nolan: 6,  joeffrey: 3,  sidane: 4  } },
+  // N4 — Dur : forte pression des deux côtés, Sidané exigeant, Joeffrey menaçant.
+  { id: 4, ai: { whizip: 10, nolan: 8,  joeffrey: 6,  sidane: 7  } },
+  // N5 — Brutal mais jouable : il faut gérer énergie + 2 menaces par porte.
+  { id: 5, ai: { whizip: 13, nolan: 11, joeffrey: 8,  sidane: 10 } },
 ];
 
 // Récupère la config d'une nuit par son numéro (1 à 5).

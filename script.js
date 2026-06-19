@@ -257,6 +257,22 @@ const Sound = {
   sfx_doorClose(c, out) { this._door(c, out, 150, 48); },
   sfx_doorOpen(c, out) { this._door(c, out, 90, 130); },
 
+  // Coups sourds : un pote vient d'arriver au bout du couloir (au corner).
+  sfx_knock(c, out) {
+    const t0 = c.currentTime;
+    for (let i = 0; i < 2; i++) {
+      const t = t0 + i * 0.18;
+      const o = c.createOscillator();
+      o.type = "sine";
+      o.frequency.setValueAtTime(120, t);
+      o.frequency.exponentialRampToValueAtTime(55, t + 0.12);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.35, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+      o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.15);
+    }
+  },
+
   sfx_foxyRun(c, out) {
     const t0 = c.currentTime;
     for (let i = 0; i < 8; i++) {
@@ -642,6 +658,8 @@ const Lights = {
       .querySelector(`.light-btn[data-side="${side}"]`)
       .classList.toggle("active", on);
     document.getElementById(`door-${side}`).classList.toggle("lit", on);
+    // La même lumière éclaire aussi la petite fenêtre du couloir de ce côté.
+    document.getElementById(`window-${side}`).classList.toggle("lit", on);
   },
 
   refresh() {
@@ -912,6 +930,10 @@ const Menu = {
 const AI = {
   actors: [],   // animatroniques actifs cette nuit
 
+  // Délai de grâce en début de nuit : personne ne bouge pendant ~7 s, le temps
+  // de prendre ses marques (comme dans FNAF).
+  GRACE_MS: 7000,
+
   // Prépare les animatroniques selon la nuit (aiLevel > 0 = actif).
   init(night) {
     const cfg = getNightConfig(night);
@@ -920,10 +942,10 @@ const AI = {
         const base = { def, level: cfg.ai[def.id] };
         if (def.type === "foxy") {
           // État machine spéciale : 0 caché, 1 observe, 2 prépare, 3 course.
-          return { ...base, stage: 0, running: false, runTimer: 0, timer: def.stageInterval };
+          return { ...base, stage: 0, running: false, runTimer: 0, timer: def.stageInterval + this.GRACE_MS };
         }
         // Marcheur classique : position le long du chemin.
-        return { ...base, index: 0, timer: def.moveInterval };
+        return { ...base, index: 0, timer: def.moveInterval + this.GRACE_MS };
       }
     );
     this.renderAll();
@@ -993,6 +1015,8 @@ const AI = {
     if (act.index < lastIndex) {
       act.index++;                            // avance d'une salle
       this.onMoved(act);
+      // Arrivé au corner (juste à côté de la porte) : coups sourds d'alerte.
+      if (act.index === lastIndex) Sound.play("knock");
     } else {
       // Au corner : tentative d'entrée dans le bureau.
       if (GameState.doors[act.def.door]) {
@@ -1073,6 +1097,21 @@ const AI = {
           .join(" · ");
       }
     });
+    // Petites fenêtres : un pote dans le couloir (2A à gauche, 4A à droite) y
+    // apparaît, visible quand la lumière de ce côté est allumée.
+    const hallRoom = { left: "2A", right: "4A" };
+    ["left", "right"].forEach((side) => {
+      const winOcc = document.querySelector(`#window-${side} .win-occupant`);
+      if (!winOcc) return;
+      const here = this.actors.filter((a) => this.roomOf(a) === hallRoom[side]);
+      winOcc.classList.toggle("present", here.length > 0);
+      if (here.length) {
+        winOcc.querySelector(".occ-name").textContent = here
+          .map((a) => a.def.name)
+          .join(" · ");
+      }
+    });
+
     // Caméras : rafraîchit la salle visionnée si le moniteur est levé.
     if (GameState.cameraOpen) Cameras.updateOccupants();
   },

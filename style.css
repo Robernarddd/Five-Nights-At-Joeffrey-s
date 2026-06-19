@@ -303,87 +303,79 @@ html, body {
    ÉCRAN BUREAU (panoramique)
    ========================================================= */
 
-/* La "fenêtre" visible : tout ce qui dépasse est masqué. */
+/* La "fenêtre" visible : tout ce qui dépasse est masqué.
+   On y pose aussi l'image du bureau en COUCHE DE REPLI (couvrante, non défilante) :
+   ainsi l'écran est toujours rempli, même si le monde panoramique ne couvre pas
+   toute la largeur sur une fenêtre large/courte. */
 #office-view {
   position: absolute;
   inset: 0;
   overflow: hidden;
   cursor: ew-resize;            /* indique qu'on peut "tourner la tête" G/D */
+  background: #000 url("assets/images/office/office.png") center / cover no-repeat;
 }
 
-/* Le monde large qui défile. Largeur = hauteur écran * ratio de office.jpg
-   (2560/1080) -> plus large que l'écran 16:9, donc il y a du défilement.
-   min-width:100% évite un trou sur les écrans très larges. */
+/* Le monde large qui défile. Largeur = max(100% de l'écran, ratio image x hauteur)
+   -> toujours au moins aussi large que l'écran (jamais de trou), et plus large
+   sur les écrans hauts pour permettre le défilement. */
 #office-world {
   position: absolute;
   top: 0;
   left: 0;
   height: 100%;
-  width: calc(100vh * (2560 / 1080));
-  min-width: 100%;
+  width: max(100%, calc(100vh * (2560 / 1080)));
   will-change: transform;       /* défilement fluide (translateX via JS) */
 }
 
-/* Décor de fond. office.jpg est posé en premier ; si le fichier n'existe pas
-   encore, le dégradé en dessous reste visible (placeholder). */
+/* Décor de fond : le vrai bureau FNAF (2560x1080), même ratio que #office-world
+   donc rempli sans déformation. Repli noir si l'image manque. */
 #office-background {
   position: absolute;
   inset: 0;
   background:
-    url("assets/images/office/office.jpg") center / cover no-repeat,
-    radial-gradient(ellipse at 50% 120%, #1a1a22 0%, #0a0a0d 70%, #000 100%);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+    url("assets/images/office/office.png") center / cover no-repeat,
+    #000;
 }
-
-.placeholder-label {
-  font-size: 3.5rem;
-  letter-spacing: 0.3rem;
-  color: #2a2a33;
-  font-weight: bold;
-  padding: 0 3rem;
-}
-.placeholder-left,
-.placeholder-right { font-size: 2rem; color: #33333f; }
 
 /* ---------- Embrasures + volets (Phase 3) ---------- */
 /* Une embrasure couvre toute la hauteur, à l'extrémité du bureau.
    z-index 3 : derrière les boutons (z-index 5), qui restent cliquables. */
+/* Embrasures calées sur les ouvertures de office.png. Ajuste left/right/width
+   si les volets ne tombent pas pile sur les couloirs. */
 .doorway {
   position: absolute;
-  top: 0;
+  top: -6%;               /* étire la porte vers le haut (le bas reste calé) */
   bottom: 0;
-  width: 15%;
+  width: 35%;              /* taille de la porte (largeur inchangée) */
   z-index: 3;
   overflow: hidden;        /* cache le volet quand il est relevé */
 }
-#door-left  { left: 0; }
-#door-right { right: 0; }
+#door-left  { left: -10%; }  /* gauche décalée un peu plus vers l'extérieur */
+#door-right { right: -7%; }
 
-/* Le couloir entrevu par l'embrasure (placeholder sombre par défaut). */
+/* La lumière : un halo chaud MASQUÉ par la forme de la porte, donc l'éclairage
+   ne déborde jamais hors de l'ouverture du couloir. Caché par défaut, et caché
+   aussi quand la porte est fermée (la porte bloque la vue). */
 .hallway {
   position: absolute;
   inset: 0;
-  background:
-    repeating-linear-gradient(180deg, #0a0a0e 0 22px, #070709 22px 44px),
-    linear-gradient(90deg, #000 0%, #141420 50%, #000 100%);
-  filter: brightness(1);
-  transition: filter 0.06s;
-}
-/* Lumière allumée : le couloir s'éclaire (hall_left_lit.png le remplacera). */
-.doorway.lit .hallway {
-  filter: brightness(2.8) contrast(1.05);
-}
-/* Halo lumineux quand la lumière est allumée. */
-.doorway.lit::after {
-  content: "";
-  position: absolute;
-  inset: 0;
+  display: none;
   pointer-events: none;
   background: radial-gradient(
-    ellipse at 50% 45%, rgba(255, 244, 200, 0.18) 0%, rgba(255,244,200,0) 70%);
+    ellipse at 50% 42%,
+    rgba(255, 243, 210, 0.9) 0%,
+    rgba(255, 238, 190, 0.4) 45%,
+    rgba(255, 238, 190, 0.06) 72%,
+    rgba(255, 238, 190, 0) 100%);
+  mix-blend-mode: screen;       /* éclaircit le couloir sombre de l'image */
+  -webkit-mask: url("assets/images/office/FNAF_door.png") center / 100% 100% no-repeat;
+          mask: url("assets/images/office/FNAF_door.png") center / 100% 100% no-repeat;
 }
+/* Le côté gauche utilise la porte en miroir : on masque dans le même sens. */
+#door-left .hallway { transform: scaleX(-1); }
+
+/* Lumière allumée ET porte ouverte -> on voit le couloir éclairé. */
+.doorway.lit:not(.closed) .hallway { display: block; }
 
 /* Silhouette d'un animatronique posté au bout du couloir (au "corner").
    Placée AVANT le volet => le volet la recouvre si la porte est fermée.
@@ -398,7 +390,8 @@ html, body {
   align-items: flex-end;
   justify-content: center;
 }
-.doorway.lit .occupant.present { display: flex; }  /* révélé par la lumière */
+/* Révélé par la lumière, seulement si la porte est ouverte. */
+.doorway.lit:not(.closed) .occupant.present { display: flex; }
 .occupant .silhouette {
   position: relative;
   width: 58%;
@@ -434,23 +427,100 @@ html, body {
   text-shadow: 0 0 8px rgba(0,0,0,0.9);
 }
 
-/* Le volet métallique : caché au-dessus, descend pour fermer la porte. */
+/* La vraie porte FNAF (image transparente) : cachée au-dessus, descend pour
+   fermer. L'aspect de l'image (~339x800) colle à celui de l'embrasure. */
 .shutter {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 100%;
+  inset: 0;
   transform: translateY(-100%);
   transition: transform 0.35s cubic-bezier(0.3, 0.8, 0.4, 1);
-  background:
-    repeating-linear-gradient(180deg, #2a2a30 0 14px, #1c1c22 14px 16px),
-    linear-gradient(90deg, #15151a, #34343c 50%, #15151a);
-  border-bottom: 4px solid #4a4a54;
-  box-shadow: inset 0 -10px 20px rgba(0,0,0,0.6);
+  background: url("assets/images/office/FNAF_door.png") center / 100% 100% no-repeat;
 }
-/* Porte fermée : le volet descend et couvre l'embrasure. */
+/* Porte fermée : la porte descend et couvre l'embrasure. */
 .doorway.closed .shutter { transform: translateY(0); }
+/* Côté gauche : porte en miroir (le même asset retourné horizontalement) ;
+   le côté droit garde l'orientation d'origine. */
+#door-left .shutter { transform: scaleX(-1) translateY(-100%); }
+#door-left.closed .shutter { transform: scaleX(-1) translateY(0); }
+
+/* ---------- Petites fenêtres latérales (couloirs 2A / 4A) ---------- */
+/* Position/ taille PROVISOIRES : à caler sur l'image (left/right/top/width/height). */
+.window {
+  position: absolute;
+  top: 17%;
+  width: 6.5%;
+  height: 56%;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* Forme en perspective (trapèze) pour épouser l'encadrement : le bord intérieur
+   (côté centre) est plus haut, le bord extérieur plus court. Ajuste le 13% pour
+   incliner plus ou moins le haut/bas. */
+#window-left  {
+  left: 23%;
+  clip-path: polygon(0% 0%, 100% 13%, 100% 87%, 0% 100%);
+}
+#window-right {
+  right: 23%;
+  clip-path: polygon(0% 13%, 100% 0%, 100% 100%, 0% 87%);
+}
+
+/* Halo de lumière dans la fenêtre quand la lumière du côté est allumée. */
+.win-light {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: radial-gradient(ellipse at 50% 45%,
+    rgba(255,243,210,0.85) 0%, rgba(255,238,190,0.25) 55%, rgba(255,238,190,0) 85%);
+  mix-blend-mode: screen;
+}
+.window.lit .win-light { display: block; }
+
+/* Silhouette du pote dans la fenêtre, révélée seulement si la lumière est allumée. */
+.win-occupant {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+.window.lit .win-occupant.present { display: flex; }
+.win-occupant .silhouette {
+  position: relative;
+  width: 66%;
+  height: 86%;
+  background:
+    radial-gradient(circle at 50% 22%, #44444e 0%, #1a1a22 55%),
+    linear-gradient(#101015, #26262e);
+  border-radius: 45% 45% 14% 14% / 30% 30% 12% 12%;
+}
+.win-occupant .silhouette::before,
+.win-occupant .silhouette::after {
+  content: "";
+  position: absolute;
+  top: 18%;
+  width: 9%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px #fff;
+}
+.win-occupant .silhouette::before { left: 33%; }
+.win-occupant .silhouette::after  { right: 33%; }
+.win-occupant .occ-name {
+  position: absolute;
+  top: 1%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  color: #d83a3a;
+  text-shadow: 0 0 6px #000;
+}
 
 /* ---------- Côtés (porte + lumière) ---------- */
 .side {
