@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Five Nights at Joeffrey's</title>
-  <link rel="stylesheet" href="style.css?v=22" />
+  <link rel="stylesheet" href="style.css?v=23" />
 </head>
 <body>
 
@@ -35,6 +35,7 @@
       <button id="btn-new" class="fnaf-item">New Game</button>
       <button id="btn-continue" class="fnaf-item">Continue</button>
       <button id="btn-select" class="fnaf-item">Night Select</button>
+      <button id="btn-custom" class="fnaf-item">Custom Night</button>
       <button id="btn-credits" class="fnaf-item">Credits</button>
     </nav>
 
@@ -48,6 +49,17 @@
     <div class="menu-box">
       <h2 class="menu-subtitle">SÉLECTION DE NUIT</h2>
       <div id="night-list" class="night-list"></div>
+      <button class="menu-back" data-back>← Retour</button>
+    </div>
+  </section>
+
+  <!-- ============ CUSTOM NIGHT (débloquée après la Nuit 5) ============ -->
+  <section id="custom-screen" class="screen">
+    <div class="menu-box">
+      <h2 class="menu-subtitle">CUSTOM NIGHT</h2>
+      <p class="custom-hint">Règle l'IA de chaque pote (0 = inactif, 20 = max)</p>
+      <div id="custom-list" class="custom-list"></div>
+      <button id="custom-start" class="menu-back">Lancer la nuit</button>
       <button class="menu-back" data-back>← Retour</button>
     </div>
   </section>
@@ -274,9 +286,9 @@
     <div class="vhs-vignette"></div>
   </div>
 
-  <script src="data/nights.js?v=22"></script>
-  <script src="data/cameras.js?v=22"></script>
-  <script src="data/animatronics.js?v=22"></script>
-  <script src="script.js?v=22"></script>
+  <script src="data/nights.js?v=23"></script>
+  <script src="data/cameras.js?v=23"></script>
+  <script src="data/animatronics.js?v=23"></script>
+  <script src="script.js?v=23"></script>
 </body>
 </html>

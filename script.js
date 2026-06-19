@@ -50,7 +50,7 @@ const CONFIG = {
    ========================================================= */
 const Save = {
   KEY: "fnaf_entre_potes_save",
-  data: { unlocked: 1 },
+  data: { unlocked: 1, customUnlocked: false },
 
   load() {
     try {
@@ -75,6 +75,14 @@ const Save = {
     const target = Math.min(n, max);
     if (target > this.data.unlocked) {
       this.data.unlocked = target;
+      this.persist();
+    }
+  },
+
+  // Débloque la Custom Night (après avoir fini la dernière nuit).
+  unlockCustom() {
+    if (!this.data.customUnlocked) {
+      this.data.customUnlocked = true;
       this.persist();
     }
   },
@@ -456,6 +464,7 @@ const VHS = {
    ========================================================= */
 const GameState = {
   night: 1,          // nuit en cours
+  customAI: null,    // IA personnalisée (Custom Night) ou null
   running: false,    // la nuit est-elle active ?
   paused: false,     // menu pause ouvert (Échap) ?
   elapsed: 0,        // temps réel écoulé dans la nuit (secondes)
@@ -468,6 +477,7 @@ const GameState = {
 
   reset(night) {
     this.night = night;
+    this.customAI = null;
     this.running = false;
     this.paused = false;
     this.elapsed = 0;
@@ -937,8 +947,20 @@ const Menu = {
     document.getElementById("btn-select").addEventListener("click", () => {
       this.showSelect();
     });
+    document.getElementById("btn-custom").addEventListener("click", () => {
+      this.showCustom();
+    });
     document.getElementById("btn-credits").addEventListener("click", () => {
       Screens.show("credits-screen");
+    });
+
+    // Custom Night : lance la nuit avec les niveaux d'IA réglés aux curseurs.
+    document.getElementById("custom-start").addEventListener("click", () => {
+      const ai = {};
+      document.querySelectorAll(".custom-slider").forEach((s) => {
+        ai[s.dataset.id] = parseInt(s.value, 10) || 0;
+      });
+      Game.startNight(NIGHTS.length + 1, ai);
     });
 
     // Tous les boutons "Retour" / "Menu" ramènent au menu principal.
@@ -947,11 +969,32 @@ const Menu = {
     });
   },
 
-  // Affiche le menu principal et rafraîchit l'état du bouton "Continue".
+  // Affiche le menu principal et rafraîchit l'état des boutons.
   show() {
     Screens.show("menu-screen");
     // "Continue" n'a de sens que si on a dépassé la nuit 1.
     document.getElementById("btn-continue").disabled = Save.data.unlocked <= 1;
+    // "Custom Night" se débloque après avoir fini la dernière nuit.
+    document.getElementById("btn-custom").disabled = !Save.data.customUnlocked;
+  },
+
+  // Construit la grille de réglage de la Custom Night (un curseur par pote).
+  showCustom() {
+    const list = document.getElementById("custom-list");
+    list.innerHTML = "";
+    ANIMATRONICS.forEach((a) => {
+      const row = document.createElement("div");
+      row.className = "custom-row";
+      row.innerHTML = `
+        <span class="custom-name">${a.name}</span>
+        <input class="custom-slider" type="range" min="0" max="20" value="0" data-id="${a.id}" />
+        <span class="custom-val">0</span>`;
+      const slider = row.querySelector(".custom-slider");
+      const val = row.querySelector(".custom-val");
+      slider.addEventListener("input", () => { val.textContent = slider.value; });
+      list.appendChild(row);
+    });
+    Screens.show("custom-screen");
   },
 
   // Construit et affiche la grille de sélection de nuit.
@@ -988,8 +1031,9 @@ const AI = {
   GRACE_MS: 7000,
 
   // Prépare les animatroniques selon la nuit (aiLevel > 0 = actif).
-  init(night) {
-    const cfg = getNightConfig(night);
+  // customAI (Custom Night) remplace les niveaux de la nuit s'il est fourni.
+  init(night, customAI) {
+    const cfg = customAI ? { ai: customAI } : getNightConfig(night);
     this.actors = ANIMATRONICS.filter((a) => (cfg.ai[a.id] || 0) > 0).map(
       (def) => {
         const base = { def, level: cfg.ai[def.id] };
@@ -1366,14 +1410,15 @@ const Game = {
     Menu.show();
   },
 
-  startNight(night) {
+  startNight(night, customAI = null) {
     GameState.reset(night);
+    GameState.customAI = customAI;    // Custom Night : IA réglée par le joueur
     GameState.running = true;
     Pan.enabled = true;              // ré-autorise le défilement (coupé par une panne)
     Screens.show("office-screen");
     Doors.refresh();
     Lights.refresh();
-    AI.init(night);
+    AI.init(night, customAI);
     Clock.update();
     Power.update();
 
@@ -1435,12 +1480,21 @@ const Game = {
     Sound.stopAllLoops();
     Sound.play("victory");
 
+    // Custom Night : pas de déblocage, juste un message de réussite.
+    if (GameState.customAI) {
+      document.getElementById("win-text").textContent =
+        "Custom Night réussie — bravo !";
+      Screens.show("win-screen");
+      return;
+    }
+
     // Déblocage de la nuit suivante + écran de victoire 6 AM.
     const n = GameState.night;
     Save.unlock(n + 1);
     const isLast = n >= NIGHTS.length;
+    if (isLast) Save.unlockCustom();   // finir la dernière nuit débloque la Custom Night
     document.getElementById("win-text").textContent = isLast
-      ? `Nuit ${n} terminée — tu as survécu à toutes les nuits, bravo !`
+      ? `Nuit ${n} terminée — tu as survécu à toutes les nuits ! Custom Night débloquée.`
       : `Nuit ${n} terminée ! Nuit ${n + 1} débloquée.`;
     Screens.show("win-screen");
   },

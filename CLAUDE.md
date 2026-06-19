@@ -32,6 +32,8 @@ Both end with the same directive: **modular, commented, easily-modifiable** code
 
 **Joeffrey (Freddy, Phase 9, done):** standard mover, right door, slow `moveInterval` 7000, path `1A→1B→7→4A→4B` (shares the right side with Nolan). Inactive Night 1. Has the authentic Freddy trait via `freezeWhenWatched: true` — `AI.tickStandard` holds his timer while `Cameras.current === roomOf(act)` and the monitor is up (he freezes when watched, advances when you look away). **Full cast done (Phases 6–9).** The doorway `.occupant` shows all names at a corner joined by " · " (e.g. Nolan + Joeffrey).
 
+**Custom Night (done):** `#custom-screen` with one 0–20 slider per animatronic (built from `ANIMATRONICS` in `Menu.showCustom`). `btn-custom` in the main menu is disabled until `Save.data.customUnlocked` (set by `Save.unlockCustom()` when Night 5 is beaten in `winNight`). Starting it calls `Game.startNight(NIGHTS.length+1, aiObject)`; `startNight`/`AI.init` take an optional `customAI` that overrides the night's levels (`GameState.customAI`). Winning a custom night just shows a success message (no unlock).
+
 **Menu + save (Phase 13, done):** App now boots into `#menu-screen` (not straight into a night). `Save` persists `{unlocked}` (highest night, 1–5) to `localStorage` key `fnaf_entre_potes_save`. `Menu` wires New Game (night 1) / Continue (last unlocked) / Night Select (grid, locked nights disabled) / Credits. Winning calls `Save.unlock(night+1)` → `#win-screen`; losing → `#gameover-screen`; both return via `[data-back]` buttons to `Menu.show()`. The rAF loop is started **once** in `Game.init` (not per night) — `tick()` only runs when `GameState.running`.
 
 ## Code modules (script.js)
