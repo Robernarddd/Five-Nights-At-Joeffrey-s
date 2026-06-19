@@ -1136,13 +1136,9 @@ const Jumpscare = {
 
   // Joue le jumpscare de `def`, puis appelle onDone (~1,1 s).
   play(def, onDone) {
-    this.nameEl.textContent = def.name || "";
-
-    // Vraie image si dispo ; sinon on garde le visage placeholder.
+    // Vraie image du pote si dispo ; sinon le visage placeholder CSS.
     this.imgEl.classList.add("hidden");
-    this.imgEl.onload = () => this.imgEl.classList.remove("hidden");
-    this.imgEl.onerror = () => this.imgEl.classList.add("hidden");
-    this.imgEl.src = `assets/images/jumpscares/${def.id}.png`;
+    this.loadFace(`assets/images/jumpscares/${def.id}.png`);
 
     this.el.classList.remove("hidden");
     this.el.classList.add("active");
@@ -1153,6 +1149,43 @@ const Jumpscare = {
       this.el.classList.add("hidden");
       if (onDone) onDone();
     }, 1100);
+  },
+
+  // Charge l'image, et si son fond est opaque (damier "cuit" / fond plein), on
+  // détoure automatiquement les pixels gris clair/blancs -> transparents, pour
+  // que le pote apparaisse sur le noir du jumpscare.
+  loadFace(src) {
+    const img = new Image();
+    img.onerror = () => this.imgEl.classList.add("hidden");
+    img.onload = () => {
+      let out = src;
+      try {
+        const c = document.createElement("canvas");
+        c.width = img.naturalWidth;
+        c.height = img.naturalHeight;
+        const ctx = c.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const data = ctx.getImageData(0, 0, c.width, c.height);
+        const d = data.data;
+        // Si le coin haut-gauche est opaque, le fond est "cuit" -> on détoure.
+        if (d[3] > 250) {
+          for (let i = 0; i < d.length; i += 4) {
+            const r = d[i], g = d[i + 1], b = d[i + 2];
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            // Gris clair / blanc (lumineux + peu saturé) = damier -> transparent.
+            if (max > 140 && max - min < 28) d[i + 3] = 0;
+          }
+          ctx.putImageData(data, 0, 0);
+          out = c.toDataURL();
+        }
+      } catch (e) {
+        /* canvas indisponible : on garde l'image brute */
+      }
+      this.imgEl.src = out;
+      this.imgEl.classList.remove("hidden");
+    };
+    img.src = src;
   },
 
   // Son : tente le fichier du pote, sinon cri synthétisé (via Sound, qui
@@ -1277,6 +1310,7 @@ const Game = {
   startNight(night) {
     GameState.reset(night);
     GameState.running = true;
+    Pan.enabled = true;              // ré-autorise le défilement (coupé par une panne)
     Screens.show("office-screen");
     Doors.refresh();
     Lights.refresh();
@@ -1384,18 +1418,33 @@ const Game = {
     Doors.refresh();
     Lights.refresh();
 
-    // Séquence de panne : écran noir + yeux + musique, puis jumpscare de Joeffrey.
+    // Séquence de panne : filtre noir + Joeffrey dans l'embrasure + musique,
+    // puis jumpscare (avec le bureau en fond).
+    Pan.enabled = false;                 // on fige la vue pendant la panne
     Sound.stopAllLoops();
     Sound.play("powerOutMusic");
-    const blackout = document.getElementById("blackout");
-    blackout.classList.remove("hidden");
+
     const killer = getAnimatronic("joeffrey") || { id: "joeffrey", name: "Joeffrey" };
+    const blackout = document.getElementById("blackout");
+    const boImg = document.getElementById("blackout-img");
+    // Vraie image de Joeffrey dans l'embrasure si elle existe, sinon silhouette.
+    boImg.classList.add("hidden");
+    boImg.onload = () => boImg.classList.remove("hidden");
+    boImg.onerror = () => boImg.classList.add("hidden");
+    boImg.src = `assets/images/jumpscares/${killer.id}.png`;
+    const figure = document.getElementById("blackout-figure");
+    figure.classList.remove("hidden");
+    blackout.classList.remove("hidden");
+
     setTimeout(() => {
+      figure.classList.add("hidden");      // la silhouette d'embrasure disparaît
+      // Le filtre noir RESTE pendant le jumpscare de Joeffrey (ambiance panne) ;
+      // il n'est retiré qu'ensuite. Les autres jumpscares n'ont pas ce filtre.
       Jumpscare.play(killer, () => {
         blackout.classList.add("hidden");
         this.loseNight();
       });
-    }, 2200);
+    }, 4000);
   },
 
   loseNight() {

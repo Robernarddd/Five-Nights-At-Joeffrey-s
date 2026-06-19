@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Five Nights at Joeffrey's</title>
-  <link rel="stylesheet" href="style.css?v=15" />
+  <link rel="stylesheet" href="style.css?v=19" />
 </head>
 <body>
 
@@ -220,9 +220,13 @@
   </div>
 
   <!-- ============ PANNE DE COURANT (séquence) ============ -->
-  <!-- Écran noir avec deux yeux qui apparaissent, avant le jumpscare. -->
+  <!-- Filtre noir sur le bureau (panne), puis Joeffrey apparaît dans
+       l'embrasure (yeux qui brillent) avec sa musique, avant le jumpscare. -->
   <div id="blackout" class="hidden">
-    <div class="blackout-eyes"><span></span><span></span></div>
+    <div id="blackout-figure">
+      <div class="bo-silhouette"></div>
+      <img id="blackout-img" class="hidden" alt="" />
+    </div>
   </div>
 
   <!-- ============ JUMPSCARE ============ -->
@@ -268,9 +272,9 @@
     <div class="vhs-vignette"></div>
   </div>
 
-  <script src="data/nights.js?v=15"></script>
-  <script src="data/cameras.js?v=15"></script>
-  <script src="data/animatronics.js?v=15"></script>
-  <script src="script.js?v=15"></script>
+  <script src="data/nights.js?v=19"></script>
+  <script src="data/cameras.js?v=19"></script>
+  <script src="data/animatronics.js?v=19"></script>
+  <script src="script.js?v=19"></script>
 </body>
 </html>
