@@ -336,6 +336,22 @@ html, body {
 }
 .menu-reset:hover { color: #ff6a6a; text-shadow: 0 0 8px rgba(220, 60, 60, 0.6); }
 
+/* Joeffrey en filigrane à droite du menu : volontairement TRÈS sombre et peu
+   opaque (juste assez visible pour qu'on le devine dans l'ombre). Reste DERRIÈRE
+   le titre et les options (z-index 1 < 3). Vide si l'image manque. */
+.menu-deco {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 46%;
+  z-index: 1;
+  pointer-events: none;
+  background: url("assets/images/animatronics/joeffrey.png") right bottom / contain no-repeat;
+  opacity: 0.12;
+  filter: brightness(0.45) contrast(1.05);
+}
+
 /* =========================================================
    ÉCRAN BUREAU (panoramique)
    ========================================================= */

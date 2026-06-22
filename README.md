@@ -12,12 +12,6 @@ aucun framework, aucune étape de build, aucune dépendance.
 > et la nuit, ils comptent bien te faire **dégager** de la maison. Tiens jusqu'à
 > **6h** : les parents se réveillent, et tu es tranquille.
 
-## 📸 Aperçu
-
-| Menu | Bureau | Caméras |
-| :---: | :---: | :---: |
-| ![Le menu principal](screenshots/menu.png) | ![Le bureau de surveillance](screenshots/office.png) | ![La vue caméras](screenshots/cameras.png) |
-
 ## 🎮 Jouer
 
 Le jeu a besoin d'être servi par un petit serveur HTTP (pour charger
