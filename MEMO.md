@@ -29,7 +29,7 @@ python3 -m http.server
 Puis ouvrir **http://localhost:8000** (bien mettre le `:8000`).
 ⚠️ **Cache** : pour voir les modifs, faire **Cmd+Shift+R**, ou activer
 « Disable cache » dans les DevTools. On utilise aussi un anti-cache `?v=N` sur
-les liens CSS/JS dans `index.html` (actuellement **v=33**) — penser à
+les liens CSS/JS dans `index.html` (actuellement **v=34**) — penser à
 **incrémenter N** à chaque modif de CSS/JS.
 
 ---

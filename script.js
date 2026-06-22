@@ -1341,21 +1341,92 @@ const Jumpscare = {
   faceEl: null,
   nameEl: null,
 
+  // Cache des visages, préparés DÈS l'init pour éviter tout flash au moment du
+  // jumpscare : id -> dataURL traité (image prête), ou null si absente.
+  // (undefined = pas encore résolu.)
+  faces: {},
+
   init() {
     this.el = document.getElementById("jumpscare");
     this.imgEl = document.getElementById("jumpscare-img");
     this.faceEl = document.getElementById("jumpscare-face");
     this.nameEl = document.getElementById("jumpscare-name");
+    this.preload();
+  },
+
+  // Précharge + pré-traite toutes les images de jumpscare connues, pour qu'elles
+  // s'affichent instantanément (plus de placeholder visible au démarrage).
+  preload() {
+    const ids = ANIMATRONICS.map((a) => a.id);
+    ids.push("joeffrey_dore");   // Joeffrey Doré (easter egg)
+    ids.forEach((id) => this.cacheFace(id));
+  },
+
+  cacheFace(id) {
+    const src = `assets/images/jumpscares/${id}.png`;
+    const img = new Image();
+    img.onerror = () => { this.faces[id] = null; };      // pas d'image fournie
+    img.onload = () => { this.faces[id] = this.processFace(img, src); };
+    img.src = src;
+  },
+
+  // Détoure auto un fond opaque (damier "cuit" / fond plein) -> transparent, pour
+  // que le pote apparaisse sur le noir du jumpscare. Renvoie un dataURL (ou src).
+  processFace(img, src) {
+    try {
+      const c = document.createElement("canvas");
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      const ctx = c.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      const data = ctx.getImageData(0, 0, c.width, c.height);
+      const d = data.data;
+      // Si le coin haut-gauche est opaque, le fond est "cuit" -> on détoure.
+      if (d[3] > 250) {
+        for (let i = 0; i < d.length; i += 4) {
+          const r = d[i], g = d[i + 1], b = d[i + 2];
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          // Gris clair / blanc (lumineux + peu saturé) = damier -> transparent.
+          if (max > 140 && max - min < 28) d[i + 3] = 0;
+        }
+        ctx.putImageData(data, 0, 0);
+        return c.toDataURL();
+      }
+    } catch (e) {
+      /* canvas indisponible : on garde l'image brute */
+    }
+    return src;
   },
 
   // Joue le jumpscare de `def`, puis appelle onDone (~1,1 s).
   play(def, onDone) {
-    // Vraie image du pote si dispo ; sinon le visage placeholder CSS.
-    // Par défaut on affiche le placeholder ; il sera masqué dès que la vraie
-    // image se charge (sinon il resterait visible DERRIÈRE une image transparente).
+    // Vraie image du pote si dispo (préchargée) ; sinon le visage placeholder CSS.
     this.imgEl.classList.add("hidden");
-    this.faceEl.classList.remove("hidden");
-    this.loadFace(`assets/images/jumpscares/${def.id}.png`);
+    this.faceEl.classList.add("hidden");
+
+    const cached = this.faces[def.id];
+    if (cached) {
+      // Image prête : affichage immédiat, aucun flash de placeholder.
+      this.imgEl.src = cached;
+      this.imgEl.classList.remove("hidden");
+    } else if (cached === null) {
+      // Image absente : on montre le visage placeholder CSS.
+      this.faceEl.classList.remove("hidden");
+    } else {
+      // Pas encore préchargée (cas rare) : on la charge sans flasher le
+      // placeholder ; il n'apparaîtra qu'en cas d'échec.
+      this.cacheFace(def.id);
+      const src = `assets/images/jumpscares/${def.id}.png`;
+      const img = new Image();
+      img.onerror = () => this.faceEl.classList.remove("hidden");
+      img.onload = () => {
+        this.imgEl.src = this.processFace(img, src);
+        this.imgEl.classList.remove("hidden");
+        this.faceEl.classList.add("hidden");
+      };
+      img.src = src;
+    }
 
     this.el.classList.remove("hidden");
     this.el.classList.add("active");
@@ -1366,48 +1437,6 @@ const Jumpscare = {
       this.el.classList.add("hidden");
       if (onDone) onDone();
     }, 1100);
-  },
-
-  // Charge l'image, et si son fond est opaque (damier "cuit" / fond plein), on
-  // détoure automatiquement les pixels gris clair/blancs -> transparents, pour
-  // que le pote apparaisse sur le noir du jumpscare.
-  loadFace(src) {
-    const img = new Image();
-    // Pas d'image : on garde le visage placeholder CSS.
-    img.onerror = () => {
-      this.imgEl.classList.add("hidden");
-      this.faceEl.classList.remove("hidden");
-    };
-    img.onload = () => {
-      let out = src;
-      try {
-        const c = document.createElement("canvas");
-        c.width = img.naturalWidth;
-        c.height = img.naturalHeight;
-        const ctx = c.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-        const data = ctx.getImageData(0, 0, c.width, c.height);
-        const d = data.data;
-        // Si le coin haut-gauche est opaque, le fond est "cuit" -> on détoure.
-        if (d[3] > 250) {
-          for (let i = 0; i < d.length; i += 4) {
-            const r = d[i], g = d[i + 1], b = d[i + 2];
-            const max = Math.max(r, g, b);
-            const min = Math.min(r, g, b);
-            // Gris clair / blanc (lumineux + peu saturé) = damier -> transparent.
-            if (max > 140 && max - min < 28) d[i + 3] = 0;
-          }
-          ctx.putImageData(data, 0, 0);
-          out = c.toDataURL();
-        }
-      } catch (e) {
-        /* canvas indisponible : on garde l'image brute */
-      }
-      this.imgEl.src = out;
-      this.imgEl.classList.remove("hidden");
-      this.faceEl.classList.add("hidden");   // la vraie image remplace le placeholder
-    };
-    img.src = src;
   },
 
   // Son : tente le fichier du pote, sinon cri synthétisé (via Sound, qui
