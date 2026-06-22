@@ -1338,18 +1338,23 @@ const AI = {
 const Jumpscare = {
   el: null,
   imgEl: null,
+  faceEl: null,
   nameEl: null,
 
   init() {
     this.el = document.getElementById("jumpscare");
     this.imgEl = document.getElementById("jumpscare-img");
+    this.faceEl = document.getElementById("jumpscare-face");
     this.nameEl = document.getElementById("jumpscare-name");
   },
 
   // Joue le jumpscare de `def`, puis appelle onDone (~1,1 s).
   play(def, onDone) {
     // Vraie image du pote si dispo ; sinon le visage placeholder CSS.
+    // Par défaut on affiche le placeholder ; il sera masqué dès que la vraie
+    // image se charge (sinon il resterait visible DERRIÈRE une image transparente).
     this.imgEl.classList.add("hidden");
+    this.faceEl.classList.remove("hidden");
     this.loadFace(`assets/images/jumpscares/${def.id}.png`);
 
     this.el.classList.remove("hidden");
@@ -1368,7 +1373,11 @@ const Jumpscare = {
   // que le pote apparaisse sur le noir du jumpscare.
   loadFace(src) {
     const img = new Image();
-    img.onerror = () => this.imgEl.classList.add("hidden");
+    // Pas d'image : on garde le visage placeholder CSS.
+    img.onerror = () => {
+      this.imgEl.classList.add("hidden");
+      this.faceEl.classList.remove("hidden");
+    };
     img.onload = () => {
       let out = src;
       try {
@@ -1396,6 +1405,7 @@ const Jumpscare = {
       }
       this.imgEl.src = out;
       this.imgEl.classList.remove("hidden");
+      this.faceEl.classList.add("hidden");   // la vraie image remplace le placeholder
     };
     img.src = src;
   },
