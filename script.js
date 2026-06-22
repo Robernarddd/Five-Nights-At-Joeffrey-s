@@ -86,6 +86,13 @@ const Save = {
       this.persist();
     }
   },
+
+  // Réinitialise TOUTE la progression (nuits débloquées + Custom Night),
+  // comme une nouvelle installation du jeu.
+  reset() {
+    this.data = { unlocked: 1, customUnlocked: false };
+    this.persist();
+  },
 };
 
 /* =========================================================
@@ -279,6 +286,87 @@ const Sound = {
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
       o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.15);
     }
+  },
+
+  // Flash subliminal « C'EST MOI » : petit éclat de bruit filtré (glitch).
+  sfx_subliminal(c, out) {
+    const t = c.currentTime;
+    const n = this._noise(c, 0.14);
+    const bp = c.createBiquadFilter();
+    bp.type = "bandpass"; bp.frequency.value = 900; bp.Q.value = 0.7;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.28, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    n.connect(bp); bp.connect(g); g.connect(out); n.start(t); n.stop(t + 0.14);
+  },
+
+  // Sonnerie de téléphone (deux « dring ») avant un appel (lore).
+  sfx_phoneRing(c, out) {
+    const t0 = c.currentTime;
+    for (let r = 0; r < 2; r++) {
+      const rt = t0 + r * 1.0;              // deux sonneries espacées
+      [440, 480].forEach((f) => {
+        const o = c.createOscillator();
+        o.type = "sine"; o.frequency.value = f;
+        const g = c.createGain();
+        // Pulsé ~20 Hz pendant 0,5 s pour l'effet « dring ».
+        g.gain.setValueAtTime(0.0001, rt);
+        for (let k = 0; k < 10; k++) {
+          const kt = rt + k * 0.05;
+          g.gain.setValueAtTime(0.09, kt);
+          g.gain.setValueAtTime(0.0001, kt + 0.025);
+        }
+        o.connect(g); g.connect(out); o.start(rt); o.stop(rt + 0.55);
+      });
+    }
+  },
+
+  // Petit « bip » discret à chaque caractère tapé d'un appel.
+  sfx_phoneBlip(c, out) {
+    const t = c.currentTime;
+    const o = c.createOscillator();
+    o.type = "square"; o.frequency.value = 1400;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.025, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.035);
+  },
+
+  // Grésillement de ligne téléphonique (boucle pendant l'écoute d'un appel).
+  loop_phone(c, out) {
+    const src = this._noise(c, 1, true);
+    const bp = c.createBiquadFilter();
+    bp.type = "bandpass"; bp.frequency.value = 1700; bp.Q.value = 0.8;
+    const g = c.createGain(); g.gain.value = 0.025;
+    src.connect(bp); bp.connect(g); g.connect(out); src.start();
+    return { stop() { try { src.stop(); } catch (e) {} } };
+  },
+
+  // Bourdon grave et dissonant : présence de Joeffrey Doré dans le bureau.
+  sfx_goldenHum(c, out) {
+    const t = c.currentTime;
+    const o = c.createOscillator();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(70, t);
+    o.frequency.linearRampToValueAtTime(58, t + 1.6);
+    const lp = c.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 320;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.2);
+    g.gain.setValueAtTime(0.3, t + 1.0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.7);
+    o.connect(lp); lp.connect(g); g.connect(out); o.start(t); o.stop(t + 1.75);
+    // Deuxième oscillateur légèrement désaccordé -> battement angoissant.
+    const o2 = c.createOscillator();
+    o2.type = "sine"; o2.frequency.value = 73;
+    const g2 = c.createGain();
+    g2.gain.setValueAtTime(0.0001, t);
+    g2.gain.exponentialRampToValueAtTime(0.12, t + 0.2);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 1.7);
+    o2.connect(g2); g2.connect(out); o2.start(t); o2.stop(t + 1.75);
   },
 
   sfx_foxyRun(c, out) {
@@ -820,11 +908,18 @@ const Cameras = {
   },
 
   toggle() {
-    if (GameState.cameraOpen) this.lower();
-    else this.raise();
+    if (GameState.cameraOpen) {
+      this.lower();
+      // Baisser le moniteur peut faire surgir Joeffrey Doré (easter egg).
+      EasterEggs.onMonitorLowered();
+    } else {
+      this.raise();
+    }
   },
 
   raise() {
+    // Relever le moniteur chasse Joeffrey Doré s'il est dans le bureau.
+    EasterEggs.onMonitorRaised();
     if (!GameState.running) return;
     GameState.cameraOpen = true;
     Pan.enabled = false;             // on ne tourne plus la tête dans le bureau
@@ -872,6 +967,7 @@ const Cameras = {
     this.render(cam);
     this.updateOccupants();
     this.applyScramble();    // une caméra peut être brouillée au moment où on l'ouvre
+    EasterEggs.onCameraSelect(id);  // flashs subliminaux / affiche dorée (rares)
   },
 
   // Brouille les caméras `roomIds` pendant 1 s (pote en déplacement) : si on en
@@ -954,6 +1050,19 @@ const Menu = {
       Screens.show("credits-screen");
     });
 
+    // Reset progression : remet le jeu à zéro (nuit 1, Custom Night reverrouillée),
+    // avec confirmation pour éviter un effacement accidentel.
+    document.getElementById("btn-reset").addEventListener("click", () => {
+      const ok = window.confirm(
+        "Réinitialiser toute la progression ?\n" +
+        "Tu repartiras de la Nuit 1 et la Custom Night sera reverrouillée."
+      );
+      if (!ok) return;
+      Save.reset();
+      this.show();                       // rafraîchit l'état des boutons du menu
+      EasterEggs.toast("Progression réinitialisée — retour à la Nuit 1.");
+    });
+
     // Custom Night : lance la nuit avec les niveaux d'IA réglés aux curseurs.
     document.getElementById("custom-start").addEventListener("click", () => {
       const ai = {};
@@ -974,8 +1083,9 @@ const Menu = {
     Screens.show("menu-screen");
     // "Continue" n'a de sens que si on a dépassé la nuit 1.
     document.getElementById("btn-continue").disabled = Save.data.unlocked <= 1;
-    // "Custom Night" se débloque après avoir fini la dernière nuit.
-    document.getElementById("btn-custom").disabled = !Save.data.customUnlocked;
+    // "Custom Night" est CACHÉE tant qu'elle n'est pas débloquée (fin de Nuit 5
+    // ou Code Konami) : elle n'apparaît dans le menu qu'une fois débloquée.
+    document.getElementById("btn-custom").classList.toggle("hidden", !Save.data.customUnlocked);
   },
 
   // Construit la grille de réglage de la Custom Night (un curseur par pote).
@@ -1382,6 +1492,284 @@ const Pause = {
 };
 
 /* =========================================================
+   PhoneCalls — appels du début de nuit (le lore, façon « Phone Guy »)
+   Affiche le message de la nuit (data/calls.js) en bas à gauche, écrit lettre
+   par lettre, avec sonnerie puis grésillement de ligne synthétisés. Ne bloque
+   jamais le jeu (on peut agir pendant l'écoute) ; le bouton « passer » révèle
+   le texte d'un coup, puis le ferme.
+   ========================================================= */
+const PhoneCalls = {
+  el: null, fromEl: null, textEl: null, skipEl: null,
+  state: "off",         // off | ringing | typing | done
+  call: null,           // appel en cours (objet de PHONE_CALLS)
+  full: "",             // texte complet à taper
+  pos: 0,               // nombre de caractères déjà affichés
+  timer: null,          // minuterie de frappe / fermeture auto
+  ringTimer: null,      // minuterie « fin de sonnerie »
+
+  CHAR_MS: 32,          // vitesse de frappe (ms par caractère)
+  RING_MS: 2200,        // durée de la sonnerie avant la voix
+  AUTOHIDE_MS: 6000,    // délai avant fermeture auto une fois le texte fini
+
+  init() {
+    this.el = document.getElementById("phone-call");
+    this.fromEl = document.getElementById("phone-from");
+    this.textEl = document.getElementById("phone-text");
+    this.skipEl = document.getElementById("phone-skip");
+    this.skipEl.addEventListener("click", () => this.skip());
+  },
+
+  // Lance l'appel de la nuit (rien si la nuit n'a pas d'entrée dans calls.js).
+  startForNight(night) {
+    this.stop();
+    const call = (typeof getPhoneCall === "function") ? getPhoneCall(night) : null;
+    if (!call) return;
+    this.call = call;
+    this.full = call.text || "";
+    this.pos = 0;
+    this.fromEl.textContent = call.from || "Appel entrant…";
+    this.textEl.textContent = "";
+    this.el.classList.remove("typing");
+    this.el.classList.toggle("glitch", !!call.glitch);
+    this.el.classList.add("ringing");
+    this.el.classList.remove("hidden");
+    this.state = "ringing";
+    Sound.play("phoneRing");
+    // Après la sonnerie, la « voix » commence à s'écrire.
+    this.ringTimer = setTimeout(() => this.beginTyping(), this.RING_MS);
+  },
+
+  beginTyping() {
+    if (this.state === "off" || !GameState.running) { this.stop(); return; }
+    this.state = "typing";
+    this.el.classList.remove("ringing");
+    this.el.classList.add("typing");
+    Sound.startLoop("phone");
+    this.tick();
+  },
+
+  // Tape un caractère, puis se replanifie (en respectant la pause).
+  tick() {
+    this.timer = setTimeout(() => {
+      if (this.state !== "typing" || !GameState.running) { this.stop(); return; }
+      if (GameState.paused) { this.tick(); return; }   // gelé pendant la pause
+      this.pos++;
+      this.textEl.textContent = this.full.slice(0, this.pos);
+      if (this.pos % 2 === 0) Sound.play("phoneBlip");
+      if (this.pos >= this.full.length) { this.finish(); return; }
+      this.tick();
+    }, this.CHAR_MS);
+  },
+
+  // Texte entièrement affiché : on coupe la ligne et on programme la fermeture.
+  finish() {
+    this.state = "done";
+    this.el.classList.remove("typing");
+    Sound.stopLoop("phone");
+    this.timer = setTimeout(() => this.hide(), this.AUTOHIDE_MS);
+  },
+
+  // Bouton « passer » : 1er appui = tout révéler ; 2e = fermer.
+  skip() {
+    if (this.state === "ringing" || this.state === "typing") {
+      clearTimeout(this.ringTimer); clearTimeout(this.timer);
+      this.el.classList.remove("ringing");
+      this.textEl.textContent = this.full;
+      this.pos = this.full.length;
+      this.finish();
+    } else if (this.state === "done") {
+      this.hide();
+    }
+  },
+
+  hide() {
+    clearTimeout(this.timer);
+    this.el.classList.add("hidden");
+    this.state = "off";
+  },
+
+  // Arrêt complet (fin/abandon de nuit) : coupe tout proprement.
+  stop() {
+    clearTimeout(this.timer); clearTimeout(this.ringTimer);
+    this.timer = this.ringTimer = null;
+    Sound.stopLoop("phone");
+    this.state = "off";
+    this.call = null;
+    if (this.el) {
+      this.el.classList.add("hidden");
+      this.el.classList.remove("ringing", "typing", "glitch");
+    }
+  },
+};
+
+/* =========================================================
+   EasterEggs — clins d'œil cachés façon FNAF
+   Trois secrets, tous optionnels et SANS asset requis :
+     1. Code Konami sur le menu -> débloque la Custom Night + petit bandeau.
+     2. Flashs subliminaux « C'EST MOI » -> apparitions ultra-brèves et rares
+        en changeant de caméra (ambiance, sans danger).
+     3. Joeffrey Doré (clin d'œil au « Golden Freddy ») -> rarement, une affiche
+        dorée flashe sur une caméra ; si on rebaisse alors le moniteur, Joeffrey
+        Doré est assis dans le bureau. Relever le moniteur le chasse ; sinon il
+        attaque (jumpscare). Une seule fois par nuit.
+   Pour tester en console : EasterEggs.forceSubliminal() / forceGoldenPoster().
+   ========================================================= */
+const EasterEggs = {
+  goldenEl: null,
+  sublimEl: null,
+  toastEl: null,
+
+  // État du secret Joeffrey Doré (une seule occurrence par nuit).
+  goldenUsed: false,    // déjà déclenché cette nuit ?
+  goldenArmed: false,   // affiche vue : en attente que l'on baisse le moniteur
+  goldenActive: false,  // figure présente dans le bureau
+  goldenTimer: null,    // délai avant l'attaque si on ne réagit pas
+
+  lastFlash: 0,         // anti-spam des flashs subliminaux (timestamp)
+
+  // Faux "pote" doré pour le jumpscare (image dédiée optionnelle :
+  // assets/images/jumpscares/joeffrey_dore.png ; sinon visage placeholder).
+  GOLDEN_DEF: { id: "joeffrey_dore", name: "Joeffrey Doré" },
+
+  // Probabilités (par changement de caméra).
+  GOLDEN_CAM: "5",        // Joeffrey Doré ne peut s'amorcer QUE sur cette caméra
+  GOLDEN_CHANCE: 0.0025,  // très très rare (uniquement en regardant la CAM 5)
+  SUBLIM_CHANCE: 0.008,   // rare (par fermeture du moniteur)
+  SUBLIM_COOLDOWN: 6000,  // délai mini (ms) entre deux flashs
+  GOLDEN_GRACE: 5000,     // délai (ms) pour relever le moniteur avant l'attaque
+
+  // Suite du Code Konami (↑↑↓↓←→←→ B A).
+  KONAMI: ["arrowup","arrowup","arrowdown","arrowdown","arrowleft","arrowright","arrowleft","arrowright","b","a"],
+  konamiPos: 0,
+
+  init() {
+    this.goldenEl = document.getElementById("golden");
+    this.sublimEl = document.getElementById("subliminal");
+    this.toastEl = document.getElementById("egg-toast");
+    window.addEventListener("keydown", (e) => this.onKonamiKey(e));
+  },
+
+  /* ---- Cycle de nuit ---- */
+  startNight() {
+    this.goldenUsed = false;
+    this.goldenArmed = false;
+    this.clear();
+  },
+  // Nettoie overlays + minuterie (début de nuit, panne, défaite, victoire, abandon).
+  clear() {
+    this.goldenActive = false;
+    if (this.goldenTimer) { clearTimeout(this.goldenTimer); this.goldenTimer = null; }
+    if (this.goldenEl) this.goldenEl.classList.add("hidden");
+    if (this.sublimEl) this.sublimEl.classList.remove("show", "golden-flash");
+  },
+
+  /* ---- 3) amorçage de Joeffrey Doré (sur la CAM dédiée) ---- */
+  // Appelé à chaque sélection de caméra : seul Joeffrey Doré s'amorce ici.
+  onCameraSelect(id) {
+    if (!GameState.running || GameState.paused) return;
+    // Joeffrey Doré : très rare, une seule fois par nuit, et UNIQUEMENT en
+    // regardant la caméra dédiée (GOLDEN_CAM).
+    if (id === this.GOLDEN_CAM
+        && !this.goldenUsed && !this.goldenArmed && !this.goldenActive
+        && Math.random() < this.GOLDEN_CHANCE) {
+      this.armGolden();
+    }
+  },
+
+  flashSubliminal() {
+    if (!this.sublimEl) return;
+    this.lastFlash = performance.now();
+    Sprites.apply(this.sublimEl.querySelector(".sub-face"), "joeffrey");
+    this.sublimEl.classList.add("show");
+    Sound.play("subliminal");
+    setTimeout(() => this.sublimEl.classList.remove("show"), 130);
+  },
+
+  // L'affiche dorée flashe sur la caméra : on « arme » le secret.
+  armGolden() {
+    this.goldenUsed = true;
+    this.goldenArmed = true;
+    if (this.sublimEl) {
+      Sprites.apply(this.sublimEl.querySelector(".sub-face"), "joeffrey");
+      this.sublimEl.classList.add("show", "golden-flash");
+      Sound.play("subliminal");
+      setTimeout(() => this.sublimEl.classList.remove("show", "golden-flash"), 240);
+    }
+  },
+
+  // Appelé quand le joueur BAISSE le moniteur.
+  //  - si Joeffrey Doré est armé -> il surgit dans le bureau ;
+  //  - sinon, petite chance d'un flash subliminal « C'EST MOI ».
+  onMonitorLowered() {
+    if (!GameState.running) return;
+    // Joeffrey Doré surgit (prioritaire sur le flash).
+    if (this.goldenArmed && !this.goldenActive) {
+      this.goldenArmed = false;
+      this.goldenActive = true;
+      Sprites.apply(this.goldenEl.querySelector(".golden-figure"), "joeffrey");
+      this.goldenEl.classList.remove("hidden");
+      Sound.play("goldenHum");
+      // S'il reste sans qu'on relève le moniteur à temps -> attaque.
+      this.goldenTimer = setTimeout(() => this.goldenKill(), this.GOLDEN_GRACE);
+      return;
+    }
+    // Flash subliminal « C'EST MOI » : rare, avec un délai anti-spam.
+    const now = performance.now();
+    if (now - this.lastFlash > this.SUBLIM_COOLDOWN && Math.random() < this.SUBLIM_CHANCE) {
+      this.flashSubliminal();
+    }
+  },
+
+  // Le joueur relève le moniteur : Joeffrey Doré disparaît (sauvé).
+  onMonitorRaised() {
+    if (!this.goldenActive) return;
+    this.clear();
+  },
+
+  goldenKill() {
+    if (!this.goldenActive) return;
+    this.goldenActive = false;
+    if (this.goldenEl) this.goldenEl.classList.add("hidden");
+    Game.caught(this.GOLDEN_DEF);
+  },
+
+  /* ---- 1) Code Konami (menu) ---- */
+  onKonamiKey(e) {
+    const menuActive = document.getElementById("menu-screen").classList.contains("active");
+    if (!menuActive) { this.konamiPos = 0; return; }
+    const key = (e.key || "").toLowerCase();
+    if (key === this.KONAMI[this.konamiPos]) {
+      this.konamiPos++;
+      if (this.konamiPos === this.KONAMI.length) {
+        this.konamiPos = 0;
+        this.konamiReward();
+      }
+    } else {
+      // Recommence (ou repart à 1 si on retape la 1re touche de la suite).
+      this.konamiPos = key === this.KONAMI[0] ? 1 : 0;
+    }
+  },
+
+  konamiReward() {
+    Save.unlockCustom();
+    Menu.show();            // rafraîchit les boutons (Custom Night désormais active)
+    Sound.play("victory");
+    this.toast("★ Secret des potes trouvé — Custom Night débloquée !");
+  },
+
+  toast(msg) {
+    if (!this.toastEl) return;
+    this.toastEl.textContent = msg;
+    this.toastEl.classList.add("show");
+    setTimeout(() => this.toastEl.classList.remove("show"), 3200);
+  },
+
+  /* ---- Aides de test (console) ---- */
+  forceSubliminal() { this.flashSubliminal(); },
+  forceGoldenPoster() { this.goldenUsed = false; this.armGolden(); },
+};
+
+/* =========================================================
    Game — boucle principale et cycle de vie de la nuit
    ========================================================= */
 const Game = {
@@ -1402,6 +1790,8 @@ const Game = {
     Jumpscare.init();
     Pause.init();
     Menu.init();
+    EasterEggs.init();
+    PhoneCalls.init();
 
     // La boucle tourne en permanence ; tick() ne s'exécute que pendant une nuit.
     this.lastTime = 0;
@@ -1419,6 +1809,8 @@ const Game = {
     Doors.refresh();
     Lights.refresh();
     AI.init(night, customAI);
+    EasterEggs.startNight();         // réarme les secrets pour cette nuit
+    PhoneCalls.startForNight(night); // appel de lore (rien en Custom Night)
     Clock.update();
     Power.update();
 
@@ -1477,6 +1869,8 @@ const Game = {
     GameState.running = false;
     Cameras.lower();
     AI.reset();
+    EasterEggs.clear();
+    PhoneCalls.stop();
     Sound.stopAllLoops();
     Sound.play("victory");
 
@@ -1506,6 +1900,8 @@ const Game = {
     document.getElementById("pause").classList.add("hidden");
     Cameras.lower();
     AI.reset();
+    EasterEggs.clear();
+    PhoneCalls.stop();
     Sound.stopAllLoops();
     Sound.resume();
     Menu.show();
@@ -1522,6 +1918,8 @@ const Game = {
   powerOut() {
     GameState.running = false;
     Cameras.lower();
+    EasterEggs.clear();      // dissipe Joeffrey Doré s'il était présent
+    PhoneCalls.stop();       // coupe un appel en cours
 
     // Coupure : les portes se rouvrent (volets remontés), lumières éteintes.
     GameState.doors.left = false;
@@ -1564,6 +1962,8 @@ const Game = {
     GameState.running = false;
     Cameras.lower();
     AI.reset();
+    EasterEggs.clear();
+    PhoneCalls.stop();
     Sound.stopAllLoops();
     Screens.show("gameover-screen");
   },

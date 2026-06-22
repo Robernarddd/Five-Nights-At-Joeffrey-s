@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Five Nights at Joeffrey's</title>
-  <link rel="stylesheet" href="style.css?v=25" />
+  <link rel="stylesheet" href="style.css?v=32" />
 </head>
 <body>
 
@@ -35,12 +35,17 @@
       <button id="btn-new" class="fnaf-item">New Game</button>
       <button id="btn-continue" class="fnaf-item">Continue</button>
       <button id="btn-select" class="fnaf-item">Night Select</button>
-      <button id="btn-custom" class="fnaf-item">Custom Night</button>
+      <!-- Cachée tant que la Custom Night n'est pas débloquée (Nuit 5 ou Konami) ;
+           Menu.show() retire/ajoute .hidden selon la sauvegarde. -->
+      <button id="btn-custom" class="fnaf-item hidden">Custom Night</button>
       <button id="btn-credits" class="fnaf-item">Credits</button>
     </nav>
 
     <!-- Mention bas d'écran (version) -->
     <div class="menu-foot menu-foot-left">v 0.5</div>
+
+    <!-- Réinitialise toute la progression (nuits débloquées, Custom Night). -->
+    <button id="btn-reset" class="menu-foot menu-foot-right menu-reset">Reset progression</button>
   </section>
 
   <!-- ============ SÉLECTION DE NUIT ============ -->
@@ -254,6 +259,41 @@
     <div id="jumpscare-name"></div>
   </div>
 
+  <!-- ============ APPEL TÉLÉPHONIQUE (lore) ============ -->
+  <!-- S'affiche en bas à gauche au début d'une nuit. Le texte s'écrit lettre
+       par lettre (module PhoneCalls). pointer-events:none sur le panneau pour ne
+       jamais gêner les commandes du bureau ; seul le bouton « passer » est cliquable. -->
+  <div id="phone-call" class="hidden">
+    <div class="phone-inner">
+      <div class="phone-head">
+        <span class="phone-icon">☎</span>
+        <span id="phone-from">Appel entrant…</span>
+        <button id="phone-skip" class="phone-skip">passer ✕</button>
+      </div>
+      <p id="phone-text" class="phone-text"></p>
+    </div>
+  </div>
+
+  <!-- ============ EASTER EGGS ============ -->
+  <!-- Joeffrey Doré (clin d'œil au « Golden Freddy ») : apparaît assis dans le
+       bureau si on rebaisse le moniteur après avoir vu son affiche dorée sur une
+       caméra. Relever le moniteur le fait disparaître ; sinon il attaque.
+       pointer-events:none -> la barre CAMÉRAS reste survolable pour le chasser. -->
+  <div id="golden" class="hidden">
+    <div class="golden-figure"></div>
+    <div class="golden-text">C'EST MOI</div>
+  </div>
+
+  <!-- Flash subliminal « C'EST MOI » : surgit une fraction de seconde, rarement,
+       en changeant de caméra (ambiance, sans danger). -->
+  <div id="subliminal">
+    <div class="sub-face"></div>
+    <div class="sub-text">C'EST MOI</div>
+  </div>
+
+  <!-- Petit bandeau de notification pour les secrets (ex. Code Konami). -->
+  <div id="egg-toast"></div>
+
   <!-- ============ FILTRE VHS GLOBAL ============ -->
   <!-- Posé par-dessus TOUT le jeu (fixe, plein écran, ne capte pas la souris).
        S'applique donc à tous les écrans, actuels et futurs. -->
@@ -285,9 +325,10 @@
     <div class="vhs-vignette"></div>
   </div>
 
-  <script src="data/nights.js?v=25"></script>
-  <script src="data/cameras.js?v=25"></script>
-  <script src="data/animatronics.js?v=25"></script>
-  <script src="script.js?v=25"></script>
+  <script src="data/nights.js?v=32"></script>
+  <script src="data/cameras.js?v=32"></script>
+  <script src="data/animatronics.js?v=32"></script>
+  <script src="data/calls.js?v=32"></script>
+  <script src="script.js?v=32"></script>
 </body>
 </html>

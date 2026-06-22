@@ -29,7 +29,7 @@ python3 -m http.server
 Puis ouvrir **http://localhost:8000** (bien mettre le `:8000`).
 ⚠️ **Cache** : pour voir les modifs, faire **Cmd+Shift+R**, ou activer
 « Disable cache » dans les DevTools. On utilise aussi un anti-cache `?v=N` sur
-les liens CSS/JS dans `index.html` (actuellement **v=25**) — penser à
+les liens CSS/JS dans `index.html` (actuellement **v=32**) — penser à
 **incrémenter N** à chaque modif de CSS/JS.
 
 ---
@@ -49,6 +49,13 @@ les liens CSS/JS dans `index.html` (actuellement **v=25**) — penser à
 - **Menu pause (Échap)** : son, volume, filtre VHS, retour menu principal ; met le jeu en pause.
 - **Custom Night** : débloqué après la Nuit 5 ; curseur 0-20 par pote.
 - **Équilibrage** des 5 nuits + délai de grâce 7 s + « toc-toc » sonore quand un pote arrive au corner.
+- **Easter eggs** (module `EasterEggs`, sans asset requis) :
+  - **Code Konami** sur le menu (↑↑↓↓←→←→ B A) → débloque la **Custom Night** + petit bandeau.
+  - **Flashs subliminaux « C'EST MOI »** : apparition ultra-brève et rare **quand on baisse le moniteur** (`SUBLIM_CHANCE` 0.008, anti-spam 6 s) — ambiance, sans danger.
+  - **Joeffrey Doré** (clin d'œil au *Golden Freddy*) : **uniquement sur la CAM 5** (`EasterEggs.GOLDEN_CAM`) et **très rarement** (`GOLDEN_CHANCE` 0.0025), une **affiche dorée** flashe ; si on **rebaisse alors le moniteur**, Joeffrey Doré est assis dans le bureau → **relever le moniteur** le chasse, sinon il attaque. Une seule fois par nuit. Image de jumpscare optionnelle : `jumpscares/joeffrey_dore.png`.
+  - Test console : `EasterEggs.forceSubliminal()` / `EasterEggs.forceGoldenPoster()`.
+- **Lore — appels téléphoniques** (module `PhoneCalls`, façon *Phone Guy*) : au début de chaque nuit (1→5), un message d'un **autre cousin** s'écrit **lettre par lettre** en bas à gauche, avec sonnerie + grésillement de ligne synthétisés. Ne bloque pas le jeu ; bouton **« passer »** (1er clic = tout révéler, 2e = fermer). Les 5 textes sont dans **`data/calls.js`** — c'est là qu'on écrit/réécrit le lore (la dernière nuit a un appel « corrompu » via `glitch:true`). Pas d'appel en Custom Night.
+  - **Histoire** : on incarne **Vincent**, cousin de Joeffrey, venu passer 5 nuits chez lui en vacances. Joeffrey & sa bande (Whizip/Nolan/Sidané) veulent le **faire dégager** : se faire attraper = viré (= défaite). Tenir jusqu'à **6h** = les parents se réveillent = tranquille (= victoire).
 
 ---
 
@@ -57,13 +64,14 @@ les liens CSS/JS dans `index.html` (actuellement **v=25**) — penser à
 - `data/nights.js` — niveaux d'IA par nuit (équilibrage)
 - `data/cameras.js` — liste des 11 caméras + plan de surveillance
 - `data/animatronics.js` — les potes (id, nom, porte, chemin, comportement)
+- `data/calls.js` — textes des appels téléphoniques (le **lore**, éditable)
 - `assets/images/office/office.png` (bureau) · `FNAF_door.png` (porte)
 - `assets/images/animatronics/joeffrey.png` (image de **base** d'un pote)
 - `assets/images/jumpscares/whizip.png` (image de **jumpscare**)
 
 **Modules JS** (chacun `init()` dans `Game.init`) : `Save`, `Sound`, `Sprites`,
 `VHS`, `Screens`, `GameState`, `Clock`, `Power`, `Pan`, `Doors`, `Lights`,
-`Cameras`, `AI`, `Jumpscare`, `Pause`, `Menu`, `Game`.
+`Cameras`, `AI`, `Jumpscare`, `Pause`, `Menu`, `PhoneCalls`, `EasterEggs`, `Game`.
 
 ---
 
