@@ -348,8 +348,8 @@ html, body {
   z-index: 1;
   pointer-events: none;
   background: url("assets/images/animatronics/joeffrey.png") right bottom / contain no-repeat;
-  opacity: 0.12;
-  filter: brightness(0.45) contrast(1.05);
+  opacity: 0.22;
+  filter: brightness(0.6) contrast(1.05);
 }
 
 /* =========================================================
