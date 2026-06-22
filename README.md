@@ -1,5 +1,7 @@
 # Five Nights at Joeffrey's
 
+### ▶️ [Jouer en ligne](https://robernarddd.github.io/Five-Nights-At-Joeffrey-s/)
+
 Un fangame de **Five Nights at Freddy's 1** jouable directement dans le
 navigateur, où les animatroniques sont remplacés par les potes du créateur.
 Gameplay d'horreur joué au sérieux, **100 % HTML / CSS / JavaScript vanilla** :
