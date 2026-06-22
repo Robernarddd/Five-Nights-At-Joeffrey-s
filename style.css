@@ -19,6 +19,12 @@ html, body {
   background: #000;
   color: #d8d8d8;
   font-family: "Courier New", Courier, monospace;  /* look terminal/sécurité */
+  /* Confort tactile (mobile) : pas de sélection de texte ni de menu au
+     maintien, et pas de zoom au double-tap pendant qu'on joue. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
 }
 
 /* ---------- Système d'écrans ---------- */
@@ -1419,6 +1425,61 @@ button:disabled {
 #egg-toast.show {
   opacity: 1;
   transform: translate(-50%, 0);
+}
+
+/* =========================================================
+   CARTON D'INTRO DE NUIT
+   ========================================================= */
+#night-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 9300;                 /* au-dessus du jeu, sous la pause/jumpscare */
+  background: #050507;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+#night-intro.show { opacity: 1; }
+.ni-night {
+  font-family: "Courier New", Courier, monospace;
+  font-weight: bold;
+  font-size: clamp(2.2rem, 7vw, 5rem);
+  letter-spacing: 0.12em;
+  color: #f0f0f0;
+  text-shadow: 0 0 16px rgba(0,0,0,0.9);
+  opacity: 0;
+  animation: ni-fade 0.9s ease 0.25s forwards;
+}
+.ni-hour {
+  font-size: clamp(1.1rem, 3vw, 1.9rem);
+  letter-spacing: 0.35em;
+  color: #6a6a78;
+  opacity: 0;
+  animation: ni-fade 0.9s ease 0.65s forwards;
+}
+@keyframes ni-fade { to { opacity: 1; } }
+
+/* =========================================================
+   ÉCRAN VICTOIRE 6 AM (petit polish)
+   ========================================================= */
+/* L'heure « 06:00 AM » se révèle en grossissant, avec un halo. */
+#win-screen.active .big-time {
+  animation: six-am-in 1s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  text-shadow: 0 0 22px rgba(255, 240, 180, 0.45);
+}
+@keyframes six-am-in {
+  0%   { opacity: 0; transform: scale(0.6); letter-spacing: 1.2rem; }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: scale(1); letter-spacing: 0.3rem; }
+}
+/* Le texte de réussite apparaît juste après. */
+#win-screen.active #win-text {
+  opacity: 0;
+  animation: ni-fade 0.8s ease 0.9s forwards;
 }
 
 /* =========================================================

@@ -344,6 +344,24 @@ const Sound = {
     return { stop() { try { src.stop(); } catch (e) {} } };
   },
 
+  // Cloches de 6h du matin (victoire) : 4 « dong » qui résonnent.
+  sfx_sixAM(c, out) {
+    const t0 = c.currentTime;
+    [0, 0.5, 1.0, 1.5].forEach((dt) => {
+      const t = t0 + dt;
+      [294, 588, 880].forEach((f, i) => {     // fondamentale + harmoniques
+        const o = c.createOscillator();
+        o.type = "sine"; o.frequency.value = f;
+        const g = c.createGain();
+        const amp = i === 0 ? 0.22 : i === 1 ? 0.1 : 0.05;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(amp, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+        o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.95);
+      });
+    });
+  },
+
   // Bourdon grave et dissonant : présence de Joeffrey Doré dans le bureau.
   sfx_goldenHum(c, out) {
     const t = c.currentTime;
@@ -687,6 +705,12 @@ const Pan = {
     this.viewEl = document.getElementById("office-view");
     this.worldEl = document.getElementById("office-world");
     this.viewEl.addEventListener("mousemove", (e) => this.onMove(e));
+    // Tactile (mobile) : on suit le doigt pour « tourner la tête ».
+    this.viewEl.addEventListener(
+      "touchmove",
+      (e) => { if (e.touches[0]) this.onMove(e.touches[0]); },
+      { passive: true }
+    );
     requestAnimationFrame(() => this.frame());
   },
 
@@ -1809,6 +1833,89 @@ const EasterEggs = {
 };
 
 /* =========================================================
+   NightIntro — carton « Nuit X » affiché avant le début d'une nuit
+   ========================================================= */
+const NightIntro = {
+  el: null, nightEl: null, hourEl: null, timer: null,
+
+  init() {
+    this.el = document.getElementById("night-intro");
+    this.nightEl = this.el.querySelector(".ni-night");
+    this.hourEl = this.el.querySelector(".ni-hour");
+  },
+
+  // Affiche « Nuit X » (~2,6 s) puis appelle onDone (début réel de la nuit).
+  show(night, customAI, onDone) {
+    this.hide();
+    this.nightEl.textContent = customAI ? "Custom Night" : "Nuit " + night;
+    this.hourEl.textContent = String(CONFIG.startHour).padStart(2, "0") + "h";
+    this.el.classList.remove("hidden");
+    void this.el.offsetWidth;            // reflow : rejoue le fondu + animations
+    this.el.classList.add("show");
+    Sound.resume();
+    this.timer = setTimeout(() => {
+      this.el.classList.remove("show");  // fondu de sortie (0,5 s)
+      this.timer = setTimeout(() => {
+        this.el.classList.add("hidden");
+        if (onDone) onDone();
+      }, 520);
+    }, 2600);
+  },
+
+  hide() {
+    clearTimeout(this.timer);
+    this.timer = null;
+    if (this.el) {
+      this.el.classList.add("hidden");
+      this.el.classList.remove("show");
+    }
+  },
+};
+
+/* =========================================================
+   Keys — raccourcis clavier (en plus de la souris / du tactile)
+     A / ←  : porte gauche      D / →  : porte droite
+     Q (maintien) : lumière gauche    E (maintien) : lumière droite
+     Espace : lever / baisser les caméras
+   Portes & lumières ne répondent que moniteur baissé (comme à la souris).
+   ========================================================= */
+const Keys = {
+  init() {
+    window.addEventListener("keydown", (e) => this.onDown(e));
+    window.addEventListener("keyup", (e) => this.onUp(e));
+  },
+
+  playing() { return GameState.running && !GameState.paused; },
+
+  onDown(e) {
+    if (!this.playing()) return;
+    const tag = (e.target && e.target.tagName) || "";
+    if (tag === "INPUT" || tag === "TEXTAREA") return;
+    const k = (e.key || "").toLowerCase();
+
+    // Caméras : Espace (empêche aussi le scroll + l'activation d'un bouton focus).
+    if (e.code === "Space" || k === " " || k === "spacebar") {
+      e.preventDefault();
+      Cameras.flip();
+      return;
+    }
+    // Le reste seulement quand le moniteur est baissé (portes injoignables sinon).
+    if (GameState.cameraOpen) return;
+
+    if (k === "a" || k === "arrowleft")       { if (!e.repeat) Doors.toggle("left"); }
+    else if (k === "d" || k === "arrowright") { if (!e.repeat) Doors.toggle("right"); }
+    else if (k === "q") { Lights.set("left", true); }
+    else if (k === "e") { Lights.set("right", true); }
+  },
+
+  onUp(e) {
+    const k = (e.key || "").toLowerCase();
+    if (k === "q") Lights.set("left", false);
+    else if (k === "e") Lights.set("right", false);
+  },
+};
+
+/* =========================================================
    Game — boucle principale et cycle de vie de la nuit
    ========================================================= */
 const Game = {
@@ -1831,6 +1938,8 @@ const Game = {
     Menu.init();
     EasterEggs.init();
     PhoneCalls.init();
+    NightIntro.init();
+    Keys.init();
 
     // La boucle tourne en permanence ; tick() ne s'exécute que pendant une nuit.
     this.lastTime = 0;
@@ -1842,9 +1951,20 @@ const Game = {
   startNight(night, customAI = null) {
     GameState.reset(night);
     GameState.customAI = customAI;    // Custom Night : IA réglée par le joueur
+    GameState.running = false;        // la nuit ne démarre qu'après le carton d'intro
+    Pan.enabled = false;
+    Screens.show("office-screen");    // bureau prêt DERRIÈRE le carton d'intro
+    Sound.stopAllLoops();
+    Sound.resume();
+
+    // Carton « Nuit X », puis démarrage réel de la nuit.
+    NightIntro.show(night, customAI, () => this.beginNight(night, customAI));
+  },
+
+  // Démarre réellement la nuit (appelé à la fin du carton d'intro).
+  beginNight(night, customAI) {
     GameState.running = true;
-    Pan.enabled = true;              // ré-autorise le défilement (coupé par une panne)
-    Screens.show("office-screen");
+    Pan.enabled = true;              // ré-autorise le défilement
     Doors.refresh();
     Lights.refresh();
     AI.init(night, customAI);
@@ -1854,8 +1974,6 @@ const Game = {
     Power.update();
 
     // Ambiance : bourdonnement du bureau pendant toute la nuit.
-    Sound.stopAllLoops();
-    Sound.resume();
     Sound.startLoop("hum");
   },
 
@@ -1911,7 +2029,8 @@ const Game = {
     EasterEggs.clear();
     PhoneCalls.stop();
     Sound.stopAllLoops();
-    Sound.play("victory");
+    Sound.play("sixAM");      // les cloches de 6h
+    Sound.play("victory");    // + petit jingle de réussite
 
     // Custom Night : pas de déblocage, juste un message de réussite.
     if (GameState.customAI) {

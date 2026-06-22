@@ -29,7 +29,7 @@ python3 -m http.server
 Puis ouvrir **http://localhost:8000** (bien mettre le `:8000`).
 ⚠️ **Cache** : pour voir les modifs, faire **Cmd+Shift+R**, ou activer
 « Disable cache » dans les DevTools. On utilise aussi un anti-cache `?v=N` sur
-les liens CSS/JS dans `index.html` (actuellement **v=36**) — penser à
+les liens CSS/JS dans `index.html` (actuellement **v=37**) — penser à
 **incrémenter N** à chaque modif de CSS/JS.
 
 ---
@@ -71,7 +71,20 @@ les liens CSS/JS dans `index.html` (actuellement **v=36**) — penser à
 
 **Modules JS** (chacun `init()` dans `Game.init`) : `Save`, `Sound`, `Sprites`,
 `VHS`, `Screens`, `GameState`, `Clock`, `Power`, `Pan`, `Doors`, `Lights`,
-`Cameras`, `AI`, `Jumpscare`, `Pause`, `Menu`, `PhoneCalls`, `EasterEggs`, `Game`.
+`Cameras`, `AI`, `Jumpscare`, `Pause`, `Menu`, `PhoneCalls`, `EasterEggs`,
+`NightIntro`, `Keys`, `Game`.
+
+**Nuit : intro + 6 AM** — `Game.startNight` montre un carton **« Nuit X »** (module
+`NightIntro`, ~3 s) puis appelle `Game.beginNight` qui démarre réellement la nuit.
+La victoire 6h joue les **cloches** (`Sound.play("sixAM")`) + animation de l'écran 6 AM.
+
+**Contrôles clavier** (module `Keys`, en plus souris/tactile) : **A/←** porte gauche,
+**D/→** porte droite, **Q/E** (maintien) lumières, **Espace** caméras (actifs en partie ;
+portes/lumières moniteur baissé). **Tactile** : défilement du bureau au doigt (`Pan` →
+`touchmove`), zoom double-tap désactivé (meta viewport + `touch-action`).
+
+**Partage** — favicon `assets/favicon.svg` (yeux dans le noir) + métadonnées Open Graph
+dans `<head>` (vignette `screenshots/menu.png` quand on partage le lien Pages).
 
 ---
 

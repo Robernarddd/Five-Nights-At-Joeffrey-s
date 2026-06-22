@@ -28,14 +28,16 @@ Puis ouvre **http://localhost:8000** dans ton navigateur.
 
 ## 🕹️ Commandes
 
-| Action | Comment |
-| --- | --- |
-| Regarder autour (bureau panoramique) | Bouge la **souris** |
-| Lever / baisser les caméras | **Survole** la barre en bas de l'écran |
-| Changer de caméra | **Clic** sur une caméra de la carte |
-| Fermer une porte | **Clic** sur le bouton `PORTE` (gauche / droite) |
-| Allumer une lumière | **Maintiens** le bouton `LUMIÈRE` |
-| Pause & réglages | Touche **Échap** |
+| Action | Souris / tactile | Clavier |
+| --- | --- | --- |
+| Regarder autour (bureau panoramique) | Bouge la **souris** / glisse le **doigt** | — |
+| Lever / baisser les caméras | **Survole** (ou tape) la barre en bas | **Espace** |
+| Changer de caméra | **Clic** sur une caméra de la carte | — |
+| Fermer une porte | **Clic** sur le bouton `PORTE` | **A** (gauche) · **D** (droite) |
+| Allumer une lumière | **Maintiens** le bouton `LUMIÈRE` | **Q** (gauche) · **E** (droite) — maintenu |
+| Pause & réglages | — | **Échap** |
+
+> Jouable au **clavier**, à la **souris** ou au **tactile** (mobile / tablette).
 
 ⚡ **Tout consomme de l'énergie** (caméras, portes fermées, lumières). À 0 %,
 plus de protection : panne, et tu te fais avoir. Gère ta consommation !

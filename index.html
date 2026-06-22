@@ -2,9 +2,25 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- maximum-scale + user-scalable=no : évite le zoom accidentel (double-tap)
+       en jouant sur mobile. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
   <title>Five Nights at Joeffrey's</title>
-  <link rel="stylesheet" href="style.css?v=36" />
+  <meta name="description" content="Fangame de Five Nights at Freddy's où les animatroniques sont les potes du créateur. Survis 5 nuits sans te faire dégager. Jouable dans le navigateur." />
+  <meta name="theme-color" content="#0a0a0e" />
+
+  <!-- Favicon (yeux qui brillent dans le noir) -->
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+
+  <!-- Open Graph / Twitter : jolie vignette quand on partage le lien -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Five Nights at Joeffrey's" />
+  <meta property="og:description" content="Survis 5 nuits chez Joeffrey sans te faire dégager. Un fangame FNAF entre potes, jouable directement dans le navigateur." />
+  <meta property="og:url" content="https://robernarddd.github.io/Five-Nights-At-Joeffrey-s/" />
+  <meta property="og:image" content="https://robernarddd.github.io/Five-Nights-At-Joeffrey-s/screenshots/menu.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="stylesheet" href="style.css?v=37" />
 </head>
 <body>
 
@@ -263,6 +279,13 @@
     <div id="jumpscare-name"></div>
   </div>
 
+  <!-- ============ CARTON D'INTRO DE NUIT ============ -->
+  <!-- Écran noir « Nuit X » affiché ~3 s avant le début de chaque nuit. -->
+  <div id="night-intro" class="hidden">
+    <div class="ni-night">Nuit 1</div>
+    <div class="ni-hour">23h</div>
+  </div>
+
   <!-- ============ APPEL TÉLÉPHONIQUE (lore) ============ -->
   <!-- S'affiche en bas à gauche au début d'une nuit. Le texte s'écrit lettre
        par lettre (module PhoneCalls). pointer-events:none sur le panneau pour ne
@@ -329,10 +352,10 @@
     <div class="vhs-vignette"></div>
   </div>
 
-  <script src="data/nights.js?v=36"></script>
-  <script src="data/cameras.js?v=36"></script>
-  <script src="data/animatronics.js?v=36"></script>
-  <script src="data/calls.js?v=36"></script>
-  <script src="script.js?v=36"></script>
+  <script src="data/nights.js?v=37"></script>
+  <script src="data/cameras.js?v=37"></script>
+  <script src="data/animatronics.js?v=37"></script>
+  <script src="data/calls.js?v=37"></script>
+  <script src="script.js?v=37"></script>
 </body>
 </html>

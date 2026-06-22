@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Favicon : deux yeux qui brillent dans le noir (ambiance FNAF) -->
+  <rect width="64" height="64" rx="12" fill="#0a0a0e"/>
+  <g>
+    <ellipse cx="23" cy="30" rx="8" ry="9" fill="#f4f4f4"/>
+    <ellipse cx="41" cy="30" rx="8" ry="9" fill="#f4f4f4"/>
+    <circle cx="24" cy="31" r="3.4" fill="#c0392b"/>
+    <circle cx="40" cy="31" r="3.4" fill="#c0392b"/>
+  </g>
+  <!-- petite bouche métallique -->
+  <rect x="22" y="46" width="20" height="5" rx="1.5" fill="#3a3a44"/>
+  <g fill="#0a0a0e">
+    <rect x="25" y="46" width="1.6" height="5"/>
+    <rect x="30" y="46" width="1.6" height="5"/>
+    <rect x="35" y="46" width="1.6" height="5"/>
+    <rect x="40" y="46" width="1.6" height="5"/>
+  </g>
+</svg>
