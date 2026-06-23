@@ -25,10 +25,10 @@ const ACHIEVEMENTS = [
   { id: "first_death", name: "Dehors !",                desc: "Se faire dégager pour la première fois." },
   { id: "blackout",    name: "Panne de courant",        desc: "Tomber complètement à court d'énergie." },
   { id: "golden",      name: "C'est toi ?",             desc: "Échapper à Joeffrey Doré.", secret: true },
-  { id: "konami",      name: "Code des potes",          desc: "Entrer le code secret depuis le menu.", secret: true },
+  { id: "konami",      name: "Le code",          desc: "Entrer le code secret depuis le menu.", secret: true },
   { id: "arcade",      name: "Game dans le game",       desc: "Gagner le mini-jeu caché dans le bureau.", secret: true },
   // « Platine » : se débloque tout seul quand TOUS les autres succès sont obtenus.
-  { id: "platinum",    name: "Légende de Joeffrey-Ville", desc: "Débloquer tous les autres succès." },
+  { id: "platinum",    name: "Légende de Joeffrey", desc: "Débloquer tous les autres succès." },
 ];
 
 function getAchievement(id) {
