@@ -610,6 +610,7 @@ const GameState = {
   lights: { left: false, right: false }, // true = lumière allumée
   cameraOpen: false,
   anyLightUsed: false,   // une lumière a-t-elle été allumée cette nuit ? (succès)
+  anyCameraUsed: false,  // le moniteur caméras a-t-il été levé cette nuit ? (succès)
   minigame: false,       // le mini-jeu caché est-il ouvert ? (gèle la nuit)
 
   reset(night) {
@@ -623,6 +624,7 @@ const GameState = {
     this.lights = { left: false, right: false };
     this.cameraOpen = false;
     this.anyLightUsed = false;
+    this.anyCameraUsed = false;
     this.minigame = false;
   },
 };
@@ -985,6 +987,7 @@ const Cameras = {
     EasterEggs.onMonitorRaised();
     if (!GameState.running) return;
     MiniGame.feed("Co");             // combinaison secrète : moniteur levé
+    GameState.anyCameraUsed = true;  // pour le succès « À l'instinct »
     GameState.cameraOpen = true;
     Pan.enabled = false;             // on ne tourne plus la tête dans le bureau
     this.monitorEl.classList.remove("hidden");
@@ -2308,6 +2311,7 @@ const Game = {
     if (GameState.power >= 50) Achievements.unlock("thrifty");
     if (GameState.power < 5) Achievements.unlock("on_fumes");
     if (!GameState.anyLightUsed) Achievements.unlock("no_lights");
+    if (!GameState.anyCameraUsed) Achievements.unlock("no_cams");
 
     // Custom Night : pas de déblocage de nuit, juste un message + succès dédiés.
     if (GameState.customAI) {

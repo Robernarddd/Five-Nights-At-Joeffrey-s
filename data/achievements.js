@@ -22,6 +22,7 @@ const ACHIEVEMENTS = [
   { id: "thrifty",     name: "Économe",                 desc: "Finir une nuit avec au moins 50 % d'énergie." },
   { id: "on_fumes",    name: "Au bout du fil",          desc: "Finir une nuit avec moins de 5 % d'énergie." },
   { id: "no_lights",   name: "À l'aveugle",             desc: "Finir une nuit sans jamais allumer de lumière." },
+  { id: "no_cams",     name: "À l'instinct",            desc: "Finir une nuit sans jamais lever les caméras." },
   { id: "first_death", name: "Dehors !",                desc: "Se faire dégager pour la première fois." },
   { id: "blackout",    name: "Panne de courant",        desc: "Tomber complètement à court d'énergie." },
   { id: "golden",      name: "C'est toi ?",             desc: "Échapper à Joeffrey Doré.", secret: true },
