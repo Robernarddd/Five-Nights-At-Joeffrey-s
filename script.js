@@ -50,7 +50,7 @@ const CONFIG = {
    ========================================================= */
 const Save = {
   KEY: "fnaf_entre_potes_save",
-  data: { unlocked: 1, customUnlocked: false },
+  data: { unlocked: 1, customUnlocked: false, achievements: {} },
 
   load() {
     try {
@@ -87,10 +87,10 @@ const Save = {
     }
   },
 
-  // Réinitialise TOUTE la progression (nuits débloquées + Custom Night),
+  // Réinitialise TOUTE la progression (nuits, Custom Night, succès),
   // comme une nouvelle installation du jeu.
   reset() {
-    this.data = { unlocked: 1, customUnlocked: false };
+    this.data = { unlocked: 1, customUnlocked: false, achievements: {} };
     this.persist();
   },
 };
@@ -362,6 +362,21 @@ const Sound = {
     });
   },
 
+  // Petit jingle de succès débloqué (deux notes montantes brillantes).
+  sfx_achievement(c, out) {
+    const t0 = c.currentTime;
+    [[784, 0], [1175, 0.11]].forEach(([f, dt]) => {   // sol -> ré (octave +)
+      const t = t0 + dt;
+      const o = c.createOscillator();
+      o.type = "triangle"; o.frequency.value = f;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.18, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+      o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.24);
+    });
+  },
+
   // Bourdon grave et dissonant : présence de Joeffrey Doré dans le bureau.
   sfx_goldenHum(c, out) {
     const t = c.currentTime;
@@ -580,6 +595,7 @@ const GameState = {
   doors:  { left: false, right: false }, // true = porte fermée
   lights: { left: false, right: false }, // true = lumière allumée
   cameraOpen: false,
+  anyDoorClosed: false,  // une porte a-t-elle été fermée cette nuit ? (succès)
 
   reset(night) {
     this.night = night;
@@ -591,6 +607,7 @@ const GameState = {
     this.doors  = { left: false, right: false };
     this.lights = { left: false, right: false };
     this.cameraOpen = false;
+    this.anyDoorClosed = false;
   },
 };
 
@@ -749,6 +766,7 @@ const Doors = {
   toggle(side) {
     if (!GameState.running) return;        // pas d'action hors partie
     GameState.doors[side] = !GameState.doors[side];
+    if (GameState.doors[side]) GameState.anyDoorClosed = true;  // pour un succès
     this.render(side);
     Power.update();                        // la conso change immédiatement
     Sound.play(GameState.doors[side] ? "doorClose" : "doorOpen");
@@ -1787,6 +1805,7 @@ const EasterEggs = {
   onMonitorRaised() {
     if (!this.goldenActive) return;
     this.clear();
+    Achievements.unlock("golden");   // succès secret : avoir échappé à Joeffrey Doré
   },
 
   goldenKill() {
@@ -1818,6 +1837,7 @@ const EasterEggs = {
     Menu.show();            // rafraîchit les boutons (Custom Night désormais active)
     Sound.play("victory");
     this.toast("★ Secret des potes trouvé — Custom Night débloquée !");
+    Achievements.unlock("konami");   // succès secret
   },
 
   toast(msg) {
@@ -1830,6 +1850,63 @@ const EasterEggs = {
   /* ---- Aides de test (console) ---- */
   forceSubliminal() { this.flashSubliminal(); },
   forceGoldenPoster() { this.goldenUsed = false; this.armGolden(); },
+};
+
+/* =========================================================
+   Achievements — succès / trophées (persistés dans Save.data.achievements)
+   Définitions dans data/achievements.js. unlock(id) est appelé depuis les
+   événements de jeu (victoire, défaite, panne, easter eggs…).
+   ========================================================= */
+const Achievements = {
+  init() {
+    if (!Save.data.achievements) Save.data.achievements = {};
+    document
+      .getElementById("btn-achievements")
+      .addEventListener("click", () => this.showScreen());
+  },
+
+  has(id) {
+    return !!(Save.data.achievements && Save.data.achievements[id]);
+  },
+
+  // Débloque un succès (une seule fois) + petit bandeau et son.
+  unlock(id) {
+    if (!Save.data.achievements) Save.data.achievements = {};
+    if (this.has(id)) return;
+    const def = getAchievement(id);
+    if (!def) return;
+    Save.data.achievements[id] = true;
+    Save.persist();
+    EasterEggs.toast("🏆 Succès : " + def.name);
+    Sound.play("achievement");
+  },
+
+  count() {
+    return ACHIEVEMENTS.filter((a) => this.has(a.id)).length;
+  },
+
+  // Construit et affiche l'écran des succès (cartes verrouillées / obtenues).
+  showScreen() {
+    const list = document.getElementById("ach-list");
+    list.innerHTML = "";
+    ACHIEVEMENTS.forEach((a) => {
+      const got = this.has(a.id);
+      const masked = a.secret && !got;   // succès secret encore caché
+      const card = document.createElement("div");
+      card.className = "ach-card" + (got ? " got" : "");
+      const icon = got ? "🏆" : a.secret ? "❓" : "🔒";
+      card.innerHTML =
+        `<div class="ach-icon">${icon}</div>
+         <div class="ach-text">
+           <div class="ach-name">${masked ? "Succès secret" : a.name}</div>
+           <div class="ach-desc">${masked ? "À découvrir…" : a.desc}</div>
+         </div>`;
+      list.appendChild(card);
+    });
+    document.getElementById("ach-count").textContent =
+      this.count() + " / " + ACHIEVEMENTS.length;
+    Screens.show("achievements-screen");
+  },
 };
 
 /* =========================================================
@@ -1940,6 +2017,7 @@ const Game = {
     PhoneCalls.init();
     NightIntro.init();
     Keys.init();
+    Achievements.init();
 
     // La boucle tourne en permanence ; tick() ne s'exécute que pendant une nuit.
     this.lastTime = 0;
@@ -2032,8 +2110,16 @@ const Game = {
     Sound.play("sixAM");      // les cloches de 6h
     Sound.play("victory");    // + petit jingle de réussite
 
-    // Custom Night : pas de déblocage, juste un message de réussite.
+    // Succès liés à toute victoire (économie d'énergie, sans portes).
+    if (GameState.power >= 50) Achievements.unlock("thrifty");
+    if (GameState.power < 5) Achievements.unlock("on_fumes");
+    if (!GameState.anyDoorClosed) Achievements.unlock("open_house");
+
+    // Custom Night : pas de déblocage de nuit, juste un message + succès dédiés.
     if (GameState.customAI) {
+      Achievements.unlock("custom_win");
+      if (ANIMATRONICS.every((a) => (GameState.customAI[a.id] || 0) === 20))
+        Achievements.unlock("max_mode");
       document.getElementById("win-text").textContent =
         "Custom Night réussie — bravo !";
       Screens.show("win-screen");
@@ -2043,8 +2129,9 @@ const Game = {
     // Déblocage de la nuit suivante + écran de victoire 6 AM.
     const n = GameState.night;
     Save.unlock(n + 1);
+    if (n === 1) Achievements.unlock("first_night");
     const isLast = n >= NIGHTS.length;
-    if (isLast) Save.unlockCustom();   // finir la dernière nuit débloque la Custom Night
+    if (isLast) { Save.unlockCustom(); Achievements.unlock("survivor"); }
     document.getElementById("win-text").textContent = isLast
       ? `Nuit ${n} terminée — tu as survécu à toutes les nuits ! Custom Night débloquée.`
       : `Nuit ${n} terminée ! Nuit ${n + 1} débloquée.`;
@@ -2076,6 +2163,7 @@ const Game = {
   powerOut() {
     GameState.running = false;
     Cameras.lower();
+    Achievements.unlock("blackout");   // succès : tomber en panne
     EasterEggs.clear();      // dissipe Joeffrey Doré s'il était présent
     PhoneCalls.stop();       // coupe un appel en cours
 
@@ -2122,6 +2210,7 @@ const Game = {
     AI.reset();
     EasterEggs.clear();
     PhoneCalls.stop();
+    Achievements.unlock("first_death");   // succès : se faire dégager
     Sound.stopAllLoops();
     Screens.show("gameover-screen");
   },

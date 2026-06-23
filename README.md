@@ -60,6 +60,7 @@ plus de protection : panne, et tu te fais avoir. Gère ta consommation !
 - **Jumpscares**, séquence de **panne de courant** immersive
 - **Audio entièrement synthétisé** (Web Audio) — aucun fichier son requis
 - **5 nuits** équilibrées + **Custom Night** déblocable
+- **Succès / trophées** à débloquer (dont quelques-uns secrets)
 - **Menu** style FNAF/VHS, **sauvegarde** de progression (localStorage)
 - **Lore** distillé par des **appels téléphoniques** au début de chaque nuit
 - Quelques **secrets** bien cachés à découvrir… 👀

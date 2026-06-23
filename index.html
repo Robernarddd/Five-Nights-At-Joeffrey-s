@@ -20,7 +20,7 @@
   <meta property="og:image" content="https://robernarddd.github.io/Five-Nights-At-Joeffrey-s/screenshots/menu.png" />
   <meta name="twitter:card" content="summary_large_image" />
 
-  <link rel="stylesheet" href="style.css?v=37" />
+  <link rel="stylesheet" href="style.css?v=38" />
 </head>
 <body>
 
@@ -58,6 +58,7 @@
       <!-- Cachée tant que la Custom Night n'est pas débloquée (Nuit 5 ou Konami) ;
            Menu.show() retire/ajoute .hidden selon la sauvegarde. -->
       <button id="btn-custom" class="fnaf-item hidden">Custom Night</button>
+      <button id="btn-achievements" class="fnaf-item">Succès</button>
       <button id="btn-credits" class="fnaf-item">Credits</button>
     </nav>
 
@@ -84,6 +85,15 @@
       <p class="custom-hint">Règle l'IA de chaque pote (0 = inactif, 20 = max)</p>
       <div id="custom-list" class="custom-list"></div>
       <button id="custom-start" class="menu-back">Lancer la nuit</button>
+      <button class="menu-back" data-back>← Retour</button>
+    </div>
+  </section>
+
+  <!-- ============ SUCCÈS / TROPHÉES ============ -->
+  <section id="achievements-screen" class="screen">
+    <div class="menu-box ach-box">
+      <h2 class="menu-subtitle">SUCCÈS — <span id="ach-count">0 / 0</span></h2>
+      <div id="ach-list" class="ach-list"></div>
       <button class="menu-back" data-back>← Retour</button>
     </div>
   </section>
@@ -352,10 +362,11 @@
     <div class="vhs-vignette"></div>
   </div>
 
-  <script src="data/nights.js?v=37"></script>
-  <script src="data/cameras.js?v=37"></script>
-  <script src="data/animatronics.js?v=37"></script>
-  <script src="data/calls.js?v=37"></script>
-  <script src="script.js?v=37"></script>
+  <script src="data/nights.js?v=38"></script>
+  <script src="data/cameras.js?v=38"></script>
+  <script src="data/animatronics.js?v=38"></script>
+  <script src="data/calls.js?v=38"></script>
+  <script src="data/achievements.js?v=38"></script>
+  <script src="script.js?v=38"></script>
 </body>
 </html>
