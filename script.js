@@ -609,7 +609,7 @@ const GameState = {
   doors:  { left: false, right: false }, // true = porte fermée
   lights: { left: false, right: false }, // true = lumière allumée
   cameraOpen: false,
-  anyDoorClosed: false,  // une porte a-t-elle été fermée cette nuit ? (succès)
+  anyLightUsed: false,   // une lumière a-t-elle été allumée cette nuit ? (succès)
   minigame: false,       // le mini-jeu caché est-il ouvert ? (gèle la nuit)
 
   reset(night) {
@@ -622,7 +622,7 @@ const GameState = {
     this.doors  = { left: false, right: false };
     this.lights = { left: false, right: false };
     this.cameraOpen = false;
-    this.anyDoorClosed = false;
+    this.anyLightUsed = false;
     this.minigame = false;
   },
 };
@@ -782,7 +782,6 @@ const Doors = {
   toggle(side) {
     if (!GameState.running) return;        // pas d'action hors partie
     GameState.doors[side] = !GameState.doors[side];
-    if (GameState.doors[side]) GameState.anyDoorClosed = true;  // pour un succès
     // Combinaison secrète du mini-jeu : jeton "Lc/Lo/Rc/Ro" selon le côté+état.
     MiniGame.feed((side === "left" ? "L" : "R") + (GameState.doors[side] ? "c" : "o"));
     this.render(side);
@@ -833,8 +832,10 @@ const Lights = {
     const next = GameState.running ? state : false;
     if (GameState.lights[side] === next) return;
     GameState.lights[side] = next;
-    // Combinaison secrète : jeton "Ll"/"Rl" à l'allumage d'une lumière.
-    if (next) MiniGame.feed(side === "left" ? "Ll" : "Rl");
+    if (next) {
+      GameState.anyLightUsed = true;                       // pour le succès « À l'aveugle »
+      MiniGame.feed(side === "left" ? "Ll" : "Rl");        // combinaison secrète
+    }
     this.render(side);
     Power.update();                  // la conso change immédiatement
     // Buzz fluorescent tant qu'au moins une lumière est allumée.
@@ -2306,7 +2307,7 @@ const Game = {
     // Succès liés à toute victoire (économie d'énergie, sans portes).
     if (GameState.power >= 50) Achievements.unlock("thrifty");
     if (GameState.power < 5) Achievements.unlock("on_fumes");
-    if (!GameState.anyDoorClosed) Achievements.unlock("open_house");
+    if (!GameState.anyLightUsed) Achievements.unlock("no_lights");
 
     // Custom Night : pas de déblocage de nuit, juste un message + succès dédiés.
     if (GameState.customAI) {

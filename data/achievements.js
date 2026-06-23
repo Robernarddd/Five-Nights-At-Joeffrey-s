@@ -21,7 +21,7 @@ const ACHIEVEMENTS = [
   { id: "max_mode",    name: "20 / 20 / 20 / 20",       desc: "Gagner une Custom Night avec tous les potes à 20." },
   { id: "thrifty",     name: "Économe",                 desc: "Finir une nuit avec au moins 50 % d'énergie." },
   { id: "on_fumes",    name: "Au bout du fil",          desc: "Finir une nuit avec moins de 5 % d'énergie." },
-  { id: "open_house",  name: "Maison ouverte",          desc: "Survivre une nuit sans jamais fermer de porte." },
+  { id: "no_lights",   name: "À l'aveugle",             desc: "Finir une nuit sans jamais allumer de lumière." },
   { id: "first_death", name: "Dehors !",                desc: "Se faire dégager pour la première fois." },
   { id: "blackout",    name: "Panne de courant",        desc: "Tomber complètement à court d'énergie." },
   { id: "golden",      name: "C'est toi ?",             desc: "Échapper à Joeffrey Doré.", secret: true },
