@@ -1903,6 +1903,14 @@ const Achievements = {
     Save.persist();
     EasterEggs.toast("🏆 Succès : " + def.name);
     Sound.play("achievement");
+    // Si on vient de débloquer un succès « normal », vérifie le 100 %.
+    if (id !== "platinum") this.checkComplete();
+  },
+
+  // Débloque le succès « platine » quand TOUS les autres sont obtenus.
+  checkComplete() {
+    const others = ACHIEVEMENTS.filter((a) => a.id !== "platinum");
+    if (others.every((a) => this.has(a.id))) this.unlock("platinum");
   },
 
   count() {

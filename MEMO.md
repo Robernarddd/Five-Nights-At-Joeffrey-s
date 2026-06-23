@@ -29,7 +29,7 @@ python3 -m http.server
 Puis ouvrir **http://localhost:8000** (bien mettre le `:8000`).
 ⚠️ **Cache** : pour voir les modifs, faire **Cmd+Shift+R**, ou activer
 « Disable cache » dans les DevTools. On utilise aussi un anti-cache `?v=N` sur
-les liens CSS/JS dans `index.html` (actuellement **v=43**) — penser à
+les liens CSS/JS dans `index.html` (actuellement **v=44**) — penser à
 **incrémenter N** à chaque modif de CSS/JS.
 
 ---
@@ -86,7 +86,7 @@ portes/lumières moniteur baissé). **Tactile** : défilement du bureau au doigt
 **Partage** — favicon `assets/favicon.svg` (yeux dans le noir) + métadonnées Open Graph
 dans `<head>` (vignette `screenshots/menu.png` quand on partage le lien Pages).
 
-**Succès / trophées** (module `Achievements`, écran « Succès » du menu) : 12 succès
+**Succès / trophées** (module `Achievements`, écran « Succès » du menu) : 13 succès
 définis dans **`data/achievements.js`** (3 secrets), persistés dans
 `Save.data.achievements`. `Achievements.unlock("<id>")` est appelé aux événements
 (victoire/défaite/panne/golden/konami/mini-jeu) ; bandeau + son `sfx_achievement`.
