@@ -783,6 +783,8 @@ const Doors = {
     if (!GameState.running) return;        // pas d'action hors partie
     GameState.doors[side] = !GameState.doors[side];
     if (GameState.doors[side]) GameState.anyDoorClosed = true;  // pour un succès
+    // Combinaison secrète du mini-jeu : jeton "Lc/Lo/Rc/Ro" selon le côté+état.
+    MiniGame.feed((side === "left" ? "L" : "R") + (GameState.doors[side] ? "c" : "o"));
     this.render(side);
     Power.update();                        // la conso change immédiatement
     Sound.play(GameState.doors[side] ? "doorClose" : "doorOpen");
@@ -831,8 +833,6 @@ const Lights = {
     const next = GameState.running ? state : false;
     if (GameState.lights[side] === next) return;
     GameState.lights[side] = next;
-    // Allumage de la lumière gauche : compté pour le déclencheur secret du mini-jeu.
-    if (next && side === "left") MiniGame.onLeftLightFlash();
     this.render(side);
     Power.update();                  // la conso change immédiatement
     // Buzz fluorescent tant qu'au moins une lumière est allumée.
@@ -1945,13 +1945,15 @@ const MiniGame = {
   DURATION: 30,        // secondes
   MOLE_MS: 850,        // durée d'apparition d'une taupe
 
-  // Déclencheur secret : il faut FLASH_COUNT allumages de la lumière gauche
-  // dans FLASH_WINDOW ms. Volontairement exigeant pour ne pas s'activer par
-  // hasard en jeu normal.
-  FLASH_COUNT: 8,
-  FLASH_WINDOW: 3000,
-
-  flashes: [],         // timestamps des allumages lumière gauche (déclencheur)
+  // Déclencheur SECRET : frapper un « code » aux portes, dans l'ordre.
+  // Jetons : "Lc"/"Lo" = porte gauche fermée/ouverte, "Rc"/"Ro" = droite.
+  // Ici : toc-toc à gauche (fermer/ouvrir ×2) puis toc à droite (fermer/ouvrir).
+  // Toute action de porte qui ne suit pas l'ordre RÉINITIALISE la combinaison
+  // -> impossible à déclencher par hasard. (Modifiable : change SEQUENCE.)
+  SEQUENCE: ["Lc", "Lo", "Lc", "Lo", "Rc", "Ro"],
+  SEQ_WINDOW: 4000,    // délai max (ms) entre deux étapes, sinon ça repart à zéro
+  seqPos: 0,
+  lastStep: 0,
   active: false,
   score: 0, time: 0,
   spawnTimer: null, clockTimer: null, spotTimer: null, endTimer: null,
@@ -1979,15 +1981,23 @@ const MiniGame = {
     this.spotEl.addEventListener("click", () => { this.hideSpot(); this.open(); });
   },
 
-  /* ---- Déclencheur secret : 5 allumages de la lumière GAUCHE en < 3 s ---- */
-  onLeftLightFlash() {
+  /* ---- Déclencheur secret : la combinaison de portes (toc-toc) ---- */
+  // Reçoit une action de porte et avance dans la combinaison ; toute erreur
+  // (ou un délai trop long entre deux étapes) réinitialise.
+  feed(token) {
     if (!GameState.running || this.active) return;
     const now = performance.now();
-    this.flashes.push(now);
-    this.flashes = this.flashes.filter((t) => now - t < this.FLASH_WINDOW);
-    if (this.flashes.length >= this.FLASH_COUNT) {
-      this.flashes = [];
-      this.revealSpot();
+    if (now - this.lastStep > this.SEQ_WINDOW) this.seqPos = 0;  // trop lent -> reset
+    this.lastStep = now;
+    if (token === this.SEQUENCE[this.seqPos]) {
+      this.seqPos++;
+      if (this.seqPos >= this.SEQUENCE.length) {
+        this.seqPos = 0;
+        this.revealSpot();
+      }
+    } else {
+      // mauvaise action : on repart (ou à 1 si elle matche la 1re étape).
+      this.seqPos = token === this.SEQUENCE[0] ? 1 : 0;
     }
   },
 

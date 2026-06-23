@@ -388,5 +388,23 @@
   <script src="data/calls.js?v=41"></script>
   <script src="data/achievements.js?v=41"></script>
   <script src="script.js?v=41"></script>
+
+  <script>
+  window.addEventListener("DOMContentLoaded", function(){
+    setTimeout(function(){
+      try {
+        GameState.running = true;
+        // 1) Mauvaise séquence -> ne doit PAS révéler
+        ["Lc","Lo","Rc","Ro","Lc","Lo"].forEach(function(t){ MiniGame.feed(t); });
+        var afterWrong = MiniGame.spotEl.classList.contains("show");
+        MiniGame.hideSpot(); MiniGame.seqPos=0;
+        // 2) Bonne séquence -> doit révéler
+        ["Lc","Lo","Lc","Lo","Rc","Ro"].forEach(function(t){ MiniGame.feed(t); });
+        var afterRight = MiniGame.spotEl.classList.contains("show");
+        document.title = "WRONG="+afterWrong+" RIGHT="+afterRight;
+      } catch(e){ document.title="ERR "+e.message; }
+    }, 60);
+  });
+  </script>
 </body>
 </html>

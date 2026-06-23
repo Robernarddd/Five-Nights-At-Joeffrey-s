@@ -74,9 +74,10 @@ plus de protection : panne, et tu te fais avoir. Gère ta consommation !
   le moniteur** pour le chasser, sinon c'est fini.
 - **Flashs subliminaux « C'EST MOI »** : surgissent une fraction de seconde quand
   tu refermes le moniteur.
-- **Mini-jeu caché** : pendant une nuit, **allume la lumière gauche 8 fois très
-  vite** (en moins de 3 s) → un point doré pulse dans le bureau ; clique-le pour
-  lancer un *tape-taupe* (15 points en 30 s = succès secret).
+- **Mini-jeu caché** : pendant une nuit, frappe le **code secret aux portes** —
+  *toc-toc à gauche* (ferme/ouvre la porte gauche ×2) puis *toc à droite*
+  (ferme/ouvre la droite), sans te tromper → un point doré pulse dans le bureau ;
+  clique-le pour lancer un *tape-taupe* (15 points en 30 s = succès secret).
 
 </details>
 

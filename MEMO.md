@@ -29,7 +29,7 @@ python3 -m http.server
 Puis ouvrir **http://localhost:8000** (bien mettre le `:8000`).
 ⚠️ **Cache** : pour voir les modifs, faire **Cmd+Shift+R**, ou activer
 « Disable cache » dans les DevTools. On utilise aussi un anti-cache `?v=N` sur
-les liens CSS/JS dans `index.html` (actuellement **v=40**) — penser à
+les liens CSS/JS dans `index.html` (actuellement **v=41**) — penser à
 **incrémenter N** à chaque modif de CSS/JS.
 
 ---
@@ -92,12 +92,14 @@ définis dans **`data/achievements.js`** (3 secrets), persistés dans
 (victoire/défaite/panne/golden/konami/mini-jeu) ; bandeau + son `sfx_achievement`.
 Le « Reset progression » les efface aussi.
 
-**Mini-jeu caché** (module `MiniGame`, façon FNAF 4) : déclencheur SECRET = allumer
-la **lumière gauche 8×** en < 3 s pendant une nuit (`FLASH_COUNT`/`FLASH_WINDOW`,
-exigeant pour ne pas s'activer par hasard) → le point `#secret-spot` du bureau pulse
-→ clic = *tape-taupe* (15 pts / 30 s). La nuit est **gelée** (`GameState.minigame`,
-gate dans `Game.loop`/`Keys`/Échap). Gagner = succès `arcade`.
-Réglages en tête du module (`FLASH_COUNT`, `FLASH_WINDOW`, `TARGET`, `DURATION`, `MOLE_MS`).
+**Mini-jeu caché** (module `MiniGame`, façon FNAF 4) : déclencheur SECRET = frapper
+un **code aux portes** dans l'ordre (`MiniGame.SEQUENCE`, jetons `Lc/Lo/Rc/Ro` émis
+par `Doors.toggle` → `MiniGame.feed`). Par défaut : `["Lc","Lo","Lc","Lo","Rc","Ro"]`
+(toc-toc gauche ×2 puis toc droite). Toute erreur ou délai > `SEQ_WINDOW` (4 s) entre
+deux étapes réinitialise → impossible par hasard. Combo réussie → `#secret-spot` pulse
+→ clic = *tape-taupe* (15 pts / 30 s). Nuit **gelée** (`GameState.minigame`, gate dans
+`Game.loop`/`Keys`/Échap). Gagner = succès `arcade`.
+Réglages en tête du module (`SEQUENCE`, `SEQ_WINDOW`, `TARGET`, `DURATION`, `MOLE_MS`).
 
 ---
 
