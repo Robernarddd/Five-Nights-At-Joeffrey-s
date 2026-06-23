@@ -833,6 +833,8 @@ const Lights = {
     const next = GameState.running ? state : false;
     if (GameState.lights[side] === next) return;
     GameState.lights[side] = next;
+    // Combinaison secrète : jeton "Ll"/"Rl" à l'allumage d'une lumière.
+    if (next) MiniGame.feed(side === "left" ? "Ll" : "Rl");
     this.render(side);
     Power.update();                  // la conso change immédiatement
     // Buzz fluorescent tant qu'au moins une lumière est allumée.
@@ -981,6 +983,7 @@ const Cameras = {
     // Relever le moniteur chasse Joeffrey Doré s'il est dans le bureau.
     EasterEggs.onMonitorRaised();
     if (!GameState.running) return;
+    MiniGame.feed("Co");             // combinaison secrète : moniteur levé
     GameState.cameraOpen = true;
     Pan.enabled = false;             // on ne tourne plus la tête dans le bureau
     this.monitorEl.classList.remove("hidden");
@@ -994,6 +997,7 @@ const Cameras = {
   },
 
   lower() {
+    MiniGame.feed("Cx");             // combinaison secrète : moniteur baissé
     GameState.cameraOpen = false;
     Pan.enabled = true;
     this.monitorEl.classList.add("hidden");
@@ -1945,12 +1949,15 @@ const MiniGame = {
   DURATION: 30,        // secondes
   MOLE_MS: 850,        // durée d'apparition d'une taupe
 
-  // Déclencheur SECRET : frapper un « code » aux portes, dans l'ordre.
-  // Jetons : "Lc"/"Lo" = porte gauche fermée/ouverte, "Rc"/"Ro" = droite.
-  // Ici : toc-toc à gauche (fermer/ouvrir ×2) puis toc à droite (fermer/ouvrir).
-  // Toute action de porte qui ne suit pas l'ordre RÉINITIALISE la combinaison
-  // -> impossible à déclencher par hasard. (Modifiable : change SEQUENCE.)
-  SEQUENCE: ["Lc", "Lo", "Lc", "Lo", "Rc", "Ro"],
+  // Déclencheur SECRET : réaliser un « rituel » d'actions, dans l'ordre.
+  // Jetons possibles (émis par Doors / Lights / Cameras) :
+  //   "Lc"/"Lo" porte gauche fermée/ouverte · "Rc"/"Ro" porte droite
+  //   "Ll"/"Rl" lumière gauche/droite allumée
+  //   "Co"/"Cx" moniteur caméras levé/baissé
+  // Par défaut : lumière+porte à gauche, puis à droite, puis lever+baisser
+  // les caméras. Toute action qui ne suit pas l'ordre (ou un délai trop long)
+  // RÉINITIALISE -> impossible par hasard. (Modifiable : change SEQUENCE.)
+  SEQUENCE: ["Ll", "Lc", "Rl", "Rc", "Co", "Cx"],
   SEQ_WINDOW: 4000,    // délai max (ms) entre deux étapes, sinon ça repart à zéro
   seqPos: 0,
   lastStep: 0,
