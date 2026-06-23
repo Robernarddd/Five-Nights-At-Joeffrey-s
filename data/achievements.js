@@ -26,6 +26,7 @@ const ACHIEVEMENTS = [
   { id: "blackout",    name: "Panne de courant",        desc: "Tomber complètement à court d'énergie." },
   { id: "golden",      name: "C'est toi ?",             desc: "Échapper à Joeffrey Doré.", secret: true },
   { id: "konami",      name: "Code des potes",          desc: "Entrer le code secret depuis le menu.", secret: true },
+  { id: "arcade",      name: "Game dans le game",       desc: "Gagner le mini-jeu caché dans le bureau.", secret: true },
 ];
 
 function getAchievement(id) {

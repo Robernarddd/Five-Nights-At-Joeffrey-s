@@ -377,6 +377,20 @@ const Sound = {
     });
   },
 
+  // Coup sec « tape-taupe » : petit pop quand on tape un pote.
+  sfx_whack(c, out) {
+    const t = c.currentTime;
+    const o = c.createOscillator();
+    o.type = "square";
+    o.frequency.setValueAtTime(420, t);
+    o.frequency.exponentialRampToValueAtTime(120, t + 0.08);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + 0.11);
+  },
+
   // Bourdon grave et dissonant : présence de Joeffrey Doré dans le bureau.
   sfx_goldenHum(c, out) {
     const t = c.currentTime;
@@ -596,6 +610,7 @@ const GameState = {
   lights: { left: false, right: false }, // true = lumière allumée
   cameraOpen: false,
   anyDoorClosed: false,  // une porte a-t-elle été fermée cette nuit ? (succès)
+  minigame: false,       // le mini-jeu caché est-il ouvert ? (gèle la nuit)
 
   reset(night) {
     this.night = night;
@@ -608,6 +623,7 @@ const GameState = {
     this.lights = { left: false, right: false };
     this.cameraOpen = false;
     this.anyDoorClosed = false;
+    this.minigame = false;
   },
 };
 
@@ -815,6 +831,8 @@ const Lights = {
     const next = GameState.running ? state : false;
     if (GameState.lights[side] === next) return;
     GameState.lights[side] = next;
+    // Allumage de la lumière gauche : compté pour le déclencheur secret du mini-jeu.
+    if (next && side === "left") MiniGame.onLeftLightFlash();
     this.render(side);
     Power.update();                  // la conso change immédiatement
     // Buzz fluorescent tant qu'au moins une lumière est allumée.
@@ -1530,9 +1548,11 @@ const Pause = {
       this.refresh();
     });
 
-    // Échap : ouvre/ferme le menu pause.
+    // Échap : ferme le mini-jeu s'il est ouvert, sinon ouvre/ferme la pause.
     window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") this.toggle();
+      if (e.key !== "Escape") return;
+      if (GameState.minigame) { MiniGame.close(); return; }
+      this.toggle();
     });
   },
 
@@ -1910,6 +1930,147 @@ const Achievements = {
 };
 
 /* =========================================================
+   MiniGame — mini-jeu caché « tape-taupe » (façon FNAF 4)
+   Déclencheur SECRET : allumer la lumière GAUCHE 5 fois en < 3 s pendant une
+   nuit -> un point caché du bureau se met à pulser ; le cliquer ouvre le jeu.
+   But : 15 points en 30 s (taper les visages des potes qui surgissent).
+   La nuit est GELÉE pendant le jeu (GameState.minigame). Gagner -> succès secret.
+   ========================================================= */
+const MiniGame = {
+  el: null, gridEl: null, scoreEl: null, timeEl: null, targetEl: null,
+  resultEl: null, spotEl: null,
+
+  HOLES: 9,
+  TARGET: 15,
+  DURATION: 30,        // secondes
+  MOLE_MS: 850,        // durée d'apparition d'une taupe
+
+  flashes: [],         // timestamps des allumages lumière gauche (déclencheur)
+  active: false,
+  score: 0, time: 0,
+  spawnTimer: null, clockTimer: null, spotTimer: null, endTimer: null,
+  moleTimers: [],
+
+  init() {
+    this.el = document.getElementById("minigame");
+    this.gridEl = document.getElementById("mg-grid");
+    this.scoreEl = document.getElementById("mg-score");
+    this.timeEl = document.getElementById("mg-time");
+    this.targetEl = document.getElementById("mg-target");
+    this.resultEl = document.getElementById("mg-result");
+    this.spotEl = document.getElementById("secret-spot");
+    this.targetEl.textContent = this.TARGET;
+
+    // Construit les trous (HOLES) une fois pour toutes.
+    for (let i = 0; i < this.HOLES; i++) {
+      const hole = document.createElement("div");
+      hole.className = "mg-hole";
+      hole.innerHTML = `<div class="mg-mole"></div>`;
+      hole.addEventListener("click", () => this.hit(hole));
+      this.gridEl.appendChild(hole);
+    }
+    document.getElementById("mg-close").addEventListener("click", () => this.close());
+    this.spotEl.addEventListener("click", () => { this.hideSpot(); this.open(); });
+  },
+
+  /* ---- Déclencheur secret : 5 allumages de la lumière GAUCHE en < 3 s ---- */
+  onLeftLightFlash() {
+    if (!GameState.running || this.active) return;
+    const now = performance.now();
+    this.flashes.push(now);
+    this.flashes = this.flashes.filter((t) => now - t < 3000);
+    if (this.flashes.length >= 5) {
+      this.flashes = [];
+      this.revealSpot();
+    }
+  },
+
+  revealSpot() {
+    if (this.active || !GameState.running) return;
+    this.spotEl.classList.add("show");
+    Sound.play("camSwitch");                 // petit bip de révélation
+    clearTimeout(this.spotTimer);
+    this.spotTimer = setTimeout(() => this.hideSpot(), 6000);  // fenêtre pour cliquer
+  },
+  hideSpot() {
+    clearTimeout(this.spotTimer);
+    this.spotEl.classList.remove("show");
+  },
+
+  /* ---- Le mini-jeu ---- */
+  open() {
+    if (this.active || !GameState.running) return;
+    this.active = true;
+    GameState.minigame = true;               // gèle la nuit
+    this.score = 0;
+    this.time = this.DURATION;
+    this.scoreEl.textContent = "0";
+    this.timeEl.textContent = this.time;
+    this.resultEl.classList.add("hidden");
+    this.gridEl.querySelectorAll(".mg-hole").forEach((h) => h.classList.remove("up"));
+    this.el.classList.remove("hidden");
+    this.spawnTimer = setInterval(() => this.spawn(), 750);
+    this.clockTimer = setInterval(() => this.tickClock(), 1000);
+    this.spawn();
+  },
+
+  spawn() {
+    const holes = Array.from(this.gridEl.querySelectorAll(".mg-hole"));
+    const free = holes.filter((h) => !h.classList.contains("up"));
+    if (!free.length) return;
+    const hole = free[Math.floor(Math.random() * free.length)];
+    const id = ANIMATRONICS[Math.floor(Math.random() * ANIMATRONICS.length)].id;
+    Sprites.apply(hole.querySelector(".mg-mole"), id);
+    hole.classList.add("up");
+    // Redescend toute seule si on ne la tape pas à temps.
+    const t = setTimeout(() => hole.classList.remove("up"), this.MOLE_MS);
+    this.moleTimers.push(t);
+  },
+
+  hit(hole) {
+    if (!this.active || !hole.classList.contains("up")) return;
+    hole.classList.remove("up");
+    this.score++;
+    this.scoreEl.textContent = this.score;
+    Sound.play("whack");
+    if (this.score >= this.TARGET) this.end(true);
+  },
+
+  tickClock() {
+    this.time--;
+    this.timeEl.textContent = this.time;
+    if (this.time <= 0) this.end(this.score >= this.TARGET);
+  },
+
+  end(win) {
+    this.stopLoops();
+    this.gridEl.querySelectorAll(".mg-hole").forEach((h) => h.classList.remove("up"));
+    this.resultEl.textContent = win
+      ? "GAGNÉ ! Bien joué 🏆"
+      : `Perdu… ${this.score}/${this.TARGET}. Réessaie !`;
+    this.resultEl.classList.remove("hidden");
+    if (win) Achievements.unlock("arcade");
+    clearTimeout(this.endTimer);
+    this.endTimer = setTimeout(() => this.close(), 2200);  // fermeture auto
+  },
+
+  stopLoops() {
+    clearInterval(this.spawnTimer); this.spawnTimer = null;
+    clearInterval(this.clockTimer); this.clockTimer = null;
+    this.moleTimers.forEach((t) => clearTimeout(t));
+    this.moleTimers = [];
+  },
+
+  close() {
+    this.stopLoops();
+    clearTimeout(this.endTimer);
+    this.el.classList.add("hidden");
+    this.active = false;
+    GameState.minigame = false;              // la nuit reprend
+  },
+};
+
+/* =========================================================
    NightIntro — carton « Nuit X » affiché avant le début d'une nuit
    ========================================================= */
 const NightIntro = {
@@ -1962,7 +2123,7 @@ const Keys = {
     window.addEventListener("keyup", (e) => this.onUp(e));
   },
 
-  playing() { return GameState.running && !GameState.paused; },
+  playing() { return GameState.running && !GameState.paused && !GameState.minigame; },
 
   onDown(e) {
     if (!this.playing()) return;
@@ -2018,6 +2179,7 @@ const Game = {
     NightIntro.init();
     Keys.init();
     Achievements.init();
+    MiniGame.init();
 
     // La boucle tourne en permanence ; tick() ne s'exécute que pendant une nuit.
     this.lastTime = 0;
@@ -2063,7 +2225,7 @@ const Game = {
     const dt = (timestamp - this.lastTime) / 1000;
     this.lastTime = timestamp;
 
-    if (GameState.running && !GameState.paused) {
+    if (GameState.running && !GameState.paused && !GameState.minigame) {
       this.tick(dt);
     }
 

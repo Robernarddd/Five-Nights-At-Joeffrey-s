@@ -20,7 +20,7 @@
   <meta property="og:image" content="https://robernarddd.github.io/Five-Nights-At-Joeffrey-s/screenshots/menu.png" />
   <meta name="twitter:card" content="summary_large_image" />
 
-  <link rel="stylesheet" href="style.css?v=38" />
+  <link rel="stylesheet" href="style.css?v=39" />
 </head>
 <body>
 
@@ -172,6 +172,10 @@
           <div class="win-occupant"><div class="silhouette"></div><div class="occ-name"></div></div>
         </div>
 
+        <!-- Point SECRET du mini-jeu : invisible, révélé (pulse) par une action
+             spéciale (allumer 5x vite la lumière gauche). Clic = ouvre le jeu. -->
+        <div id="secret-spot" title="???"></div>
+
         <!-- Porte + lumière gauche -->
         <div class="side side-left">
           <button class="light-btn" data-side="left">LUMIÈRE</button>
@@ -296,6 +300,22 @@
     <div class="ni-hour">23h</div>
   </div>
 
+  <!-- ============ MINI-JEU CACHÉ (tape-taupe) ============ -->
+  <!-- Surgit quand on clique le point secret du bureau. Gèle la nuit le temps
+       de jouer. Gagner = succès secret « arcade ». -->
+  <div id="minigame" class="hidden">
+    <div class="mg-panel">
+      <div class="mg-head">
+        <span class="mg-title">TAPE LES POTES&nbsp;!</span>
+        <span class="mg-stat">Score <b id="mg-score">0</b> / <span id="mg-target">15</span></span>
+        <span class="mg-stat">Temps <b id="mg-time">30</b>s</span>
+        <button id="mg-close" class="mg-close" title="Fermer">✕</button>
+      </div>
+      <div id="mg-grid" class="mg-grid"></div>
+      <div id="mg-result" class="mg-result hidden"></div>
+    </div>
+  </div>
+
   <!-- ============ APPEL TÉLÉPHONIQUE (lore) ============ -->
   <!-- S'affiche en bas à gauche au début d'une nuit. Le texte s'écrit lettre
        par lettre (module PhoneCalls). pointer-events:none sur le panneau pour ne
@@ -362,11 +382,11 @@
     <div class="vhs-vignette"></div>
   </div>
 
-  <script src="data/nights.js?v=38"></script>
-  <script src="data/cameras.js?v=38"></script>
-  <script src="data/animatronics.js?v=38"></script>
-  <script src="data/calls.js?v=38"></script>
-  <script src="data/achievements.js?v=38"></script>
-  <script src="script.js?v=38"></script>
+  <script src="data/nights.js?v=39"></script>
+  <script src="data/cameras.js?v=39"></script>
+  <script src="data/animatronics.js?v=39"></script>
+  <script src="data/calls.js?v=39"></script>
+  <script src="data/achievements.js?v=39"></script>
+  <script src="script.js?v=39"></script>
 </body>
 </html>
