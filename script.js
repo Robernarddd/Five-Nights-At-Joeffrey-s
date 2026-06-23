@@ -35,10 +35,10 @@ const CONFIG = {
     perDoor: 1,        // surcoût par porte fermée
     perLight: 0.5,     // surcoût par lumière allumée
     // Facteur global : convertit les "poids" ci-dessus en %/seconde réelle.
-    // 0.16 => au repos (poids 1) on perd ~64% sur une nuit de 400 s : on tient
-    // la nuit en gérant bien, mais tout laisser allumé vide la jauge. À régler
-    // pour ajuster la difficulté.
-    drainScale: 0.16,
+    // 0.11 => au repos (poids 1) on perd ~44% sur une nuit de 400 s : la batterie
+    // dure plus longtemps, mais tout laisser allumé vide quand même la jauge.
+    // À régler pour ajuster la difficulté (plus bas = batterie plus lente).
+    drainScale: 0.11,
     lowThreshold: 30,  // seuil "attention" (jaune)
     critThreshold: 10, // seuil "critique" (rouge)
   },

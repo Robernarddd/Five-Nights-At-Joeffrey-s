@@ -29,7 +29,7 @@ python3 -m http.server
 Puis ouvrir **http://localhost:8000** (bien mettre le `:8000`).
 ⚠️ **Cache** : pour voir les modifs, faire **Cmd+Shift+R**, ou activer
 « Disable cache » dans les DevTools. On utilise aussi un anti-cache `?v=N` sur
-les liens CSS/JS dans `index.html` (actuellement **v=42**) — penser à
+les liens CSS/JS dans `index.html` (actuellement **v=43**) — penser à
 **incrémenter N** à chaque modif de CSS/JS.
 
 ---
@@ -121,7 +121,7 @@ Déposer au bon chemin = remplace le placeholder, **sans toucher au code**.
 ---
 
 ## RÉGLAGES (où tuner)
-- **Difficulté énergie** : `CONFIG.power.drainScale` (0.16) dans `script.js`.
+- **Difficulté énergie** : `CONFIG.power.drainScale` (0.11) dans `script.js`.
 - **Durée d'une nuit** : `CONFIG.nightRealSeconds` (400 s).
 - **Heures** : `CONFIG.startHour` (23) → `CONFIG.endHour` (6).
 - **Niveaux d'IA par nuit** : `data/nights.js`.
