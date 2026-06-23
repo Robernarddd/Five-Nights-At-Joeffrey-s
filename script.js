@@ -1945,6 +1945,12 @@ const MiniGame = {
   DURATION: 30,        // secondes
   MOLE_MS: 850,        // durée d'apparition d'une taupe
 
+  // Déclencheur secret : il faut FLASH_COUNT allumages de la lumière gauche
+  // dans FLASH_WINDOW ms. Volontairement exigeant pour ne pas s'activer par
+  // hasard en jeu normal.
+  FLASH_COUNT: 8,
+  FLASH_WINDOW: 3000,
+
   flashes: [],         // timestamps des allumages lumière gauche (déclencheur)
   active: false,
   score: 0, time: 0,
@@ -1978,8 +1984,8 @@ const MiniGame = {
     if (!GameState.running || this.active) return;
     const now = performance.now();
     this.flashes.push(now);
-    this.flashes = this.flashes.filter((t) => now - t < 3000);
-    if (this.flashes.length >= 5) {
+    this.flashes = this.flashes.filter((t) => now - t < this.FLASH_WINDOW);
+    if (this.flashes.length >= this.FLASH_COUNT) {
       this.flashes = [];
       this.revealSpot();
     }
