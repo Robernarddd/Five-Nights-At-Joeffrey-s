@@ -97,3 +97,7 @@ et textes en français).
 
 Fangame inspiré de **Five Nights at Freddy's** de Scott Cawthon.
 Projet entre potes — *Five Nights at Joeffrey's*.
+
+Les images de salles de caméra sont des **placeholders temporaires** issus de
+[Pexels](https://www.pexels.com/) (libres d'utilisation, sans attribution
+requise) — à remplacer par les vraies images quand elles seront prêtes.

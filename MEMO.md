@@ -115,7 +115,9 @@ Déposer au bon chemin = remplace le placeholder, **sans toucher au code**.
 - Images de **base** manquantes : `animatronics/{whizip,nolan,sidane}.png`
 - **Jumpscares** manquants : `jumpscares/{nolan,sidane,joeffrey}.png`
 - Images de **salles de caméra** : `assets/images/cameras/cam_<id>.png`
-  (ids : `1A 1B 1C 2A 2B 3 4A 4B 5 6 7`) — sinon placeholder étiqueté.
+  (ids : `1A 1B 1C 2A 2B 3 4A 4B 5 6 7`). **Placeholders TEMPORAIRES en place**
+  (photos libres Pexels : couloirs, scène, resto, cuisine…) — à remplacer par
+  les vraies images en écrasant les fichiers.
 - (Optionnel) overlays porte fermée / panne, polish écran 6 AM, etc.
 
 ---
