@@ -829,13 +829,26 @@ button:disabled {
   text-shadow: 0 0 6px #000;
 }
 
-/* Vraie image de caméra (couvre le placeholder quand elle charge). */
+/* Vraie image de caméra (couvre le placeholder quand elle charge).
+   filter brightness : assombrit fortement le flux (ambiance nocturne / liminal).
+   Baisse/monte la valeur pour régler la pénombre des caméras. */
 .cam-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  filter: brightness(0.32) contrast(1.1);
+}
+/* Voile sombre par-dessus l'image de la salle (mais SOUS les silhouettes des
+   potes, qui restent visibles) : assombrit fortement le décor des caméras.
+   Ajuste l'alpha (0 = clair, 1 = noir) pour régler la pénombre. */
+#cam-image-holder::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.5);
 }
 
 /* ---------- Brouillage caméra (pote en déplacement) ---------- */
