@@ -1608,6 +1608,12 @@ const Pause = {
    le texte d'un coup, puis le ferme.
    ========================================================= */
 const PhoneCalls = {
+  // === Interrupteur du lore =================================================
+  // Mets à `true` pour réactiver les appels téléphoniques du début de nuit.
+  // Tout le code et les textes (data/calls.js) restent en place : il suffit
+  // de rebasculer ce drapeau pour remettre le lore. (Désactivé pour l'instant.)
+  ENABLED: false,
+  // =========================================================================
   el: null, fromEl: null, textEl: null, skipEl: null,
   state: "off",         // off | ringing | typing | done
   call: null,           // appel en cours (objet de PHONE_CALLS)
@@ -1631,6 +1637,7 @@ const PhoneCalls = {
   // Lance l'appel de la nuit (rien si la nuit n'a pas d'entrée dans calls.js).
   startForNight(night) {
     this.stop();
+    if (!this.ENABLED) return; // lore désactivé : aucun appel
     const call = (typeof getPhoneCall === "function") ? getPhoneCall(night) : null;
     if (!call) return;
     this.call = call;
@@ -2384,10 +2391,14 @@ const Game = {
     const boImg = document.getElementById("blackout-img");
     // Image de BASE de Joeffrey dans l'embrasure si elle existe, sinon silhouette.
     boImg.classList.add("hidden");
-    boImg.onload = () => boImg.classList.remove("hidden");
-    boImg.onerror = () => boImg.classList.add("hidden");
-    boImg.src = `assets/images/animatronics/${killer.id}.png`;
     const figure = document.getElementById("blackout-figure");
+    const boSil = figure.querySelector(".bo-silhouette");
+    // Quand la vraie image charge, on masque la silhouette placeholder derrière
+    // (sinon on la voit à travers le PNG détouré de Joeffrey). Sinon on la garde.
+    boImg.onload = () => { boImg.classList.remove("hidden"); boSil.classList.add("hidden"); };
+    boImg.onerror = () => { boImg.classList.add("hidden"); boSil.classList.remove("hidden"); };
+    boSil.classList.remove("hidden");    // placeholder par défaut tant que l'image n'a pas chargé
+    boImg.src = `assets/images/animatronics/${killer.id}.png`;
     figure.classList.remove("hidden");
     blackout.classList.remove("hidden");
 

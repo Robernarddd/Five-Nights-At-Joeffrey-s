@@ -18,7 +18,7 @@ const ACHIEVEMENTS = [
   { id: "first_night", name: "Bienvenue chez Joeffrey", desc: "Survivre à la première nuit." },
   { id: "survivor",    name: "Vacances survécues",      desc: "Battre les 5 nuits." },
   { id: "custom_win",  name: "Sur-mesure",              desc: "Gagner une Custom Night." },
-  { id: "max_mode",    name: "20 / 20 / 20 / 20",       desc: "Gagner une Custom Night avec tous les potes à 20." },
+  { id: "max_mode",    name: "20 / 20 / 20 / 20",       desc: "Gagner une Custom Night avec tous les mécréants à 20." },
   { id: "thrifty",     name: "Économe",                 desc: "Finir une nuit avec au moins 50 % d'énergie." },
   { id: "on_fumes",    name: "Au bout du fil",          desc: "Finir une nuit avec moins de 5 % d'énergie." },
   { id: "no_lights",   name: "À l'aveugle",             desc: "Finir une nuit sans jamais allumer de lumière." },
