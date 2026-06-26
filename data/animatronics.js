@@ -46,15 +46,15 @@ const ANIMATRONICS = [
     path: ["1A", "1B", "7", "4A", "4B"],
   },
   {
-    // Sidané (ex-Foxy) : système SPÉCIAL à 4 états dans Pirate Cove (cam 1C).
+    // Célian (ex-Foxy) : système SPÉCIAL à 4 états dans Pirate Cove (cam 1C).
     //   état 0 = caché, 1 = observe, 2 = prépare, 3 = course vers la porte gauche.
     // Le surveiller à la cam 1C le maintient en place. Quand il fonce, il faut
     // fermer la porte gauche à temps, sinon il entre.
     //   stageInterval : délai (ms) entre deux tentatives de progression d'état
     //   runTime       : délai (ms) entre la sortie du rideau et l'arrivée à la porte
     //   blockPower    : énergie perdue quand on le bloque (porte fermée)
-    id: "sidane",
-    name: "Sidané",
+    id: "celian",
+    name: "Célian",
     type: "foxy",
     door: "left",
     cove: "1C",

@@ -1306,7 +1306,7 @@ const AI = {
     }
   },
 
-  /* ---- Foxy (Sidané) : états + course ---- */
+  /* ---- Foxy (Célian) : états + course ---- */
   tickFoxy(act, dtMs) {
     // Phase de course : il fonce vers la porte gauche.
     if (act.running) {
@@ -1319,7 +1319,7 @@ const AI = {
           act.timer = act.def.stageInterval;
           GameState.power = Math.max(0, GameState.power - act.def.blockPower);
           Power.update();
-          console.log("[IA] Sidané bloqué à la porte — il repart se cacher.");
+          console.log("[IA] Célian bloqué à la porte — il repart se cacher.");
           this.onMoved(act);
         } else {
           Game.caught(act.def);               // porte ouverte -> attaque
@@ -1345,9 +1345,9 @@ const AI = {
         act.running = true;                   // il sort du rideau et fonce
         act.runTimer = act.def.runTime;
         Sound.play("foxyRun");
-        console.log("[IA] Sidané FONCE vers la porte gauche !");
+        console.log("[IA] Célian FONCE vers la porte gauche !");
       } else {
-        console.log(`[IA] Sidané passe en état ${act.stage}.`);
+        console.log(`[IA] Célian passe en état ${act.stage}.`);
       }
       this.onMoved(act);
     }

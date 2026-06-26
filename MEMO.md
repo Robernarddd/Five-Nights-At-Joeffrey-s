@@ -16,10 +16,10 @@ guise d'animatroniques.
 ## Casting (FNAF → potes)
 - **Whizip** (ex-Bonnie) — porte **gauche**, agressif
 - **Nolan** (ex-Chica) — porte **droite**, régulier
-- **Sidané** (ex-Foxy) — **Pirate Cove (cam 1C)**, système à 4 états, fonce vers la porte gauche
+- **Célian** (ex-Foxy) — **Pirate Cove (cam 1C)**, système à 4 états, fonce vers la porte gauche
 - **Joeffrey** (ex-Freddy) — porte **droite**, lent, **se fige quand on le regarde à la caméra**
 - Joueur : **Vincent**
-- Côtés : GAUCHE = Whizip + Sidané · DROITE = Nolan + Joeffrey
+- Côtés : GAUCHE = Whizip + Célian · DROITE = Nolan + Joeffrey
 
 ## Lancer le jeu
 ```
@@ -55,7 +55,7 @@ les liens CSS/JS dans `index.html` (actuellement **v=50**) — penser à
   - **Joeffrey Doré** (clin d'œil au *Golden Freddy*) : **uniquement sur la CAM 5** (`EasterEggs.GOLDEN_CAM`) et **très rarement** (`GOLDEN_CHANCE` 0.0025), une **affiche dorée** flashe ; si on **rebaisse alors le moniteur**, Joeffrey Doré est assis dans le bureau → **relever le moniteur** le chasse, sinon il attaque. Une seule fois par nuit. Image de jumpscare optionnelle : `jumpscares/joeffrey_dore.png`.
   - Test console : `EasterEggs.forceSubliminal()` / `EasterEggs.forceGoldenPoster()`.
 - **Lore — appels téléphoniques** (module `PhoneCalls`, façon *Phone Guy*) : au début de chaque nuit (1→5), un message d'un **autre cousin** s'écrit **lettre par lettre** en bas à gauche, avec sonnerie + grésillement de ligne synthétisés. Ne bloque pas le jeu ; bouton **« passer »** (1er clic = tout révéler, 2e = fermer). Les 5 textes sont dans **`data/calls.js`** — c'est là qu'on écrit/réécrit le lore (la dernière nuit a un appel « corrompu » via `glitch:true`). Pas d'appel en Custom Night.
-  - **Histoire** : on incarne **Vincent**, cousin de Joeffrey, venu passer 5 nuits chez lui en vacances. Joeffrey & sa bande (Whizip/Nolan/Sidané) veulent le **faire dégager** : se faire attraper = viré (= défaite). Tenir jusqu'à **6h** = les parents se réveillent = tranquille (= victoire).
+  - **Histoire** : on incarne **Vincent**, cousin de Joeffrey, venu passer 5 nuits chez lui en vacances. Joeffrey & sa bande (Whizip/Nolan/Célian) veulent le **faire dégager** : se faire attraper = viré (= défaite). Tenir jusqu'à **6h** = les parents se réveillent = tranquille (= victoire).
 
 ---
 
@@ -108,12 +108,12 @@ Réglages en tête du module (`SEQUENCE`, `SEQ_WINDOW`, `TARGET`, `DURATION`, `M
 Déposer au bon chemin = remplace le placeholder, **sans toucher au code**.
 - **Base / perso** : `assets/images/animatronics/<id>.png` — affiché quand il *apparaît* (caméras, portes, fenêtres, panne).
 - **Jumpscare** : `assets/images/jumpscares/<id>.png` — l'écran d'attaque.
-- ids : `whizip`, `nolan`, `sidane`, `joeffrey` (minuscules).
+- ids : `whizip`, `nolan`, `celian`, `joeffrey` (minuscules).
 - Idéalement **PNG détourés** (fond transparent). Un fond opaque (damier) est détouré automatiquement, mais le transparent est mieux.
 
 ## RESTE À FAIRE / À FOURNIR
-- Images de **base** manquantes : `animatronics/{whizip,nolan,sidane}.png`
-- **Jumpscares** manquants : `jumpscares/{nolan,sidane,joeffrey}.png`
+- Images de **base** manquantes : `animatronics/{whizip,nolan,celian}.png`
+- **Jumpscares** manquants : `jumpscares/{nolan,celian,joeffrey}.png`
 - Images de **salles de caméra** : `assets/images/cameras/cam_<id>.png`
   (ids : `1A 1B 1C 2A 2B 3 4A 4B 5 6 7`). **Placeholders TEMPORAIRES en place**
   (photos libres Pexels : couloirs, scène, resto, cuisine…) — à remplacer par
@@ -127,7 +127,7 @@ Déposer au bon chemin = remplace le placeholder, **sans toucher au code**.
 - **Durée d'une nuit** : `CONFIG.nightRealSeconds` (400 s).
 - **Heures** : `CONFIG.startHour` (23) → `CONFIG.endHour` (6).
 - **Niveaux d'IA par nuit** : `data/nights.js`.
-- **Vitesse/chemins des potes** : `data/animatronics.js` (`moveInterval`, `path`, et pour Sidané `stageInterval`/`runTime`/`blockPower`).
+- **Vitesse/chemins des potes** : `data/animatronics.js` (`moveInterval`, `path`, et pour Célian `stageInterval`/`runTime`/`blockPower`).
 - **Durée du brouillage caméra** : `Cameras.scramble` (1000 ms).
 - **Délai de grâce début de nuit** : `AI.GRACE_MS` (7000 ms).
 - **Position des portes/fenêtres** sur l'image : `.doorway`, `#door-left/right`, `.window`, `#window-left/right` dans `style.css` (les fenêtres sont calées sur l'image actuelle ; à refaire si on change `office.png`).

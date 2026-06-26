@@ -4,7 +4,7 @@
 
    HISTOIRE : tu incarnes VINCENT, le cousin de Joeffrey, venu passer 5 nuits
    chez lui pendant les vacances. Sauf que Joeffrey et sa bande (Whizip, Nolan,
-   Sidané) ne veulent pas de toi ici : la nuit, ils essaient de te FAIRE DÉGAGER
+   Célian) ne veulent pas de toi ici : la nuit, ils essaient de te FAIRE DÉGAGER
    de la maison. S'ils t'attrapent dans ta chambre, c'est la valise → dehors
    (= partie perdue). Tiens jusqu'à 6h : les parents se réveillent, tout le monde
    refait le gentil, et tu es tranquille (= nuit gagnée).
@@ -43,7 +43,7 @@ const PHONE_CALLS = {
       "gentil, et tu es tranquille. Allez, bonne première nuit !",
   },
 
-  // -------- Nuit 2 : conseils (qui vient d'où) + Sidané --------
+  // -------- Nuit 2 : conseils (qui vient d'où) + Célian --------
   2: {
     from: "Un cousin — Nuit 2",
     text:
@@ -51,7 +51,7 @@ const PHONE_CALLS = {
       "Deux-trois conseils. Whizip arrive surtout par la gauche, Nolan par la " +
       "droite. Garde un œil sur eux aux caméras : tant que tu les regardes, ils " +
       "osent moins avancer.\n" +
-      "Et méfie-toi de Sidané — il poireaute dans son coin (le « Pirate Cove », " +
+      "Et méfie-toi de Célian — il poireaute dans son coin (le « Pirate Cove », " +
       "qu'il appelle ça, l'idiot). Si tu l'oublies trop longtemps, il pique un " +
       "sprint vers ta porte gauche. Là, faut fermer vite.\n" +
       "Économise le compteur, hein. Bonne nuit.",

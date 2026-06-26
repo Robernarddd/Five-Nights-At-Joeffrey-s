@@ -48,7 +48,7 @@ plus de protection : panne, et tu te fais avoir. Gère ta consommation !
 | --- | --- | --- |
 | **Whizip** | ex-Bonnie | Arrive par la **porte gauche**, agressif |
 | **Nolan** | ex-Chica | Arrive par la **porte droite**, régulier |
-| **Sidané** | ex-Foxy | Planqué à *Pirate Cove* (CAM 1C), **fonce** vers la porte gauche si on l'oublie |
+| **Célian** | ex-Foxy | Planqué à *Pirate Cove* (CAM 1C), **fonce** vers la porte gauche si on l'oublie |
 | **Joeffrey** | ex-Freddy | Porte droite, lent, **se fige quand on le regarde** à la caméra |
 | **Vincent** | le joueur | C'est toi, le cousin de trop |
 
