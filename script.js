@@ -1264,7 +1264,7 @@ const AI = {
     });
   },
 
-  /* ---- Marcheur classique (Whizip, Nolan, Joeffrey) ---- */
+  /* ---- Marcheur classique (Adam, Nolan, Joeffrey) ---- */
   tickStandard(act, dtMs) {
     // Joeffrey (Freddy) : se fige tant qu'on regarde la caméra où il se trouve.
     if (

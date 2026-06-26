@@ -3,7 +3,7 @@
    Le lore se raconte ici, au début de chaque nuit, comme dans FNAF.
 
    HISTOIRE : tu incarnes VINCENT, le cousin de Joeffrey, venu passer 5 nuits
-   chez lui pendant les vacances. Sauf que Joeffrey et sa bande (Whizip, Nolan,
+   chez lui pendant les vacances. Sauf que Joeffrey et sa bande (Adam, Nolan,
    Célian) ne veulent pas de toi ici : la nuit, ils essaient de te FAIRE DÉGAGER
    de la maison. S'ils t'attrapent dans ta chambre, c'est la valise → dehors
    (= partie perdue). Tiens jusqu'à 6h : les parents se réveillent, tout le monde
@@ -48,7 +48,7 @@ const PHONE_CALLS = {
     from: "Un cousin — Nuit 2",
     text:
       "Re, c'est encore moi. Tu as tenu la première nuit, pas mal !\n" +
-      "Deux-trois conseils. Whizip arrive surtout par la gauche, Nolan par la " +
+      "Deux-trois conseils. Adam arrive surtout par la gauche, Nolan par la " +
       "droite. Garde un œil sur eux aux caméras : tant que tu les regardes, ils " +
       "osent moins avancer.\n" +
       "Et méfie-toi de Célian — il poireaute dans son coin (le « Pirate Cove », " +

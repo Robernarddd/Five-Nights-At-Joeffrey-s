@@ -14,12 +14,12 @@ Titre : **Five Nights at Joeffrey's**. Ambiance sérieuse, potes du créateur en
 guise d'animatroniques.
 
 ## Casting (FNAF → potes)
-- **Whizip** (ex-Bonnie) — porte **gauche**, agressif
+- **Adam** (ex-Bonnie) — porte **gauche**, agressif
 - **Nolan** (ex-Chica) — porte **droite**, régulier
 - **Célian** (ex-Foxy) — **Pirate Cove (cam 1C)**, système à 4 états, fonce vers la porte gauche
 - **Joeffrey** (ex-Freddy) — porte **droite**, lent, **se fige quand on le regarde à la caméra**
 - Joueur : **Vincent**
-- Côtés : GAUCHE = Whizip + Célian · DROITE = Nolan + Joeffrey
+- Côtés : GAUCHE = Adam + Célian · DROITE = Nolan + Joeffrey
 
 ## Lancer le jeu
 ```
@@ -42,7 +42,7 @@ les liens CSS/JS dans `index.html` (actuellement **v=50**) — penser à
 - **Énergie** : drain selon caméras/portes/lumières ; à 0 % → panne.
 - **Caméras** : carte fidèle à FNAF, **bascule au survol** d'une barre en bas, filtre VHS sur les caméras, **brouillage 1 s** des 2 caméras quand un pote change de salle.
 - **IA des 4 potes** (chemins, niveaux par nuit, Foxy spécial, Freddy se fige).
-- **Jumpscares** : surgissent **sur fond bureau** ; image de Whizip fournie ; détourage auto d'un fond opaque ; pas de nom affiché.
+- **Jumpscares** : surgissent **sur fond bureau** ; image de Adam fournie ; détourage auto d'un fond opaque ; pas de nom affiché.
 - **Séquence de panne** : portes se relèvent, **filtre noir** (bureau visible derrière), **Joeffrey apparaît dans l'embrasure** + musique, puis jumpscare (filtre conservé pour Joeffrey uniquement).
 - **Audio** : tout est **synthétisé en Web Audio** (bureau, caméras, portes, lumières, course/rire, musique de panne, victoire, cri). Aucun fichier requis.
 - **Menu** style FNAF/VHS, **Sélection de nuit**, **Crédits**, **sauvegarde** (localStorage).
@@ -55,7 +55,7 @@ les liens CSS/JS dans `index.html` (actuellement **v=50**) — penser à
   - **Joeffrey Doré** (clin d'œil au *Golden Freddy*) : **uniquement sur la CAM 5** (`EasterEggs.GOLDEN_CAM`) et **très rarement** (`GOLDEN_CHANCE` 0.0025), une **affiche dorée** flashe ; si on **rebaisse alors le moniteur**, Joeffrey Doré est assis dans le bureau → **relever le moniteur** le chasse, sinon il attaque. Une seule fois par nuit. Image de jumpscare optionnelle : `jumpscares/joeffrey_dore.png`.
   - Test console : `EasterEggs.forceSubliminal()` / `EasterEggs.forceGoldenPoster()`.
 - **Lore — appels téléphoniques** (module `PhoneCalls`, façon *Phone Guy*) : au début de chaque nuit (1→5), un message d'un **autre cousin** s'écrit **lettre par lettre** en bas à gauche, avec sonnerie + grésillement de ligne synthétisés. Ne bloque pas le jeu ; bouton **« passer »** (1er clic = tout révéler, 2e = fermer). Les 5 textes sont dans **`data/calls.js`** — c'est là qu'on écrit/réécrit le lore (la dernière nuit a un appel « corrompu » via `glitch:true`). Pas d'appel en Custom Night.
-  - **Histoire** : on incarne **Vincent**, cousin de Joeffrey, venu passer 5 nuits chez lui en vacances. Joeffrey & sa bande (Whizip/Nolan/Célian) veulent le **faire dégager** : se faire attraper = viré (= défaite). Tenir jusqu'à **6h** = les parents se réveillent = tranquille (= victoire).
+  - **Histoire** : on incarne **Vincent**, cousin de Joeffrey, venu passer 5 nuits chez lui en vacances. Joeffrey & sa bande (Adam/Nolan/Célian) veulent le **faire dégager** : se faire attraper = viré (= défaite). Tenir jusqu'à **6h** = les parents se réveillent = tranquille (= victoire).
 
 ---
 
@@ -67,7 +67,7 @@ les liens CSS/JS dans `index.html` (actuellement **v=50**) — penser à
 - `data/calls.js` — textes des appels téléphoniques (le **lore**, éditable)
 - `assets/images/office/office.png` (bureau) · `FNAF_door.png` (porte)
 - `assets/images/animatronics/joeffrey.png` (image de **base** d'un pote)
-- `assets/images/jumpscares/whizip.png` (image de **jumpscare**)
+- `assets/images/jumpscares/adam.png` (image de **jumpscare**)
 
 **Modules JS** (chacun `init()` dans `Game.init`) : `Save`, `Sound`, `Sprites`,
 `VHS`, `Screens`, `GameState`, `Clock`, `Power`, `Pan`, `Doors`, `Lights`,
@@ -108,11 +108,11 @@ Réglages en tête du module (`SEQUENCE`, `SEQ_WINDOW`, `TARGET`, `DURATION`, `M
 Déposer au bon chemin = remplace le placeholder, **sans toucher au code**.
 - **Base / perso** : `assets/images/animatronics/<id>.png` — affiché quand il *apparaît* (caméras, portes, fenêtres, panne).
 - **Jumpscare** : `assets/images/jumpscares/<id>.png` — l'écran d'attaque.
-- ids : `whizip`, `nolan`, `celian`, `joeffrey` (minuscules).
+- ids : `adam`, `nolan`, `celian`, `joeffrey` (minuscules).
 - Idéalement **PNG détourés** (fond transparent). Un fond opaque (damier) est détouré automatiquement, mais le transparent est mieux.
 
 ## RESTE À FAIRE / À FOURNIR
-- Images de **base** manquantes : `animatronics/{whizip,nolan,celian}.png`
+- Images de **base** manquantes : `animatronics/{adam,nolan,celian}.png`
 - **Jumpscares** manquants : `jumpscares/{nolan,celian,joeffrey}.png`
 - Images de **salles de caméra** : `assets/images/cameras/cam_<id>.png`
   (ids : `1A 1B 1C 2A 2B 3 4A 4B 5 6 7`). **Placeholders TEMPORAIRES en place**

@@ -12,14 +12,14 @@
      moveInterval : délai (ms) entre deux tentatives de déplacement
      path         : suite d'ids de caméra, de la 1re salle au corner
 
-   Whizip = ex-Bonnie : côté gauche, agressif.
+   Adam = ex-Bonnie : côté gauche, agressif.
    Chemin de Bonnie : Stage -> Dining Area -> Backstage -> West Hall -> West Corner.
    ========================================================= */
 
 const ANIMATRONICS = [
   {
-    id: "whizip",
-    name: "Whizip",
+    id: "adam",
+    name: "Adam",
     door: "left",
     moveInterval: 5000,
     path: ["1A", "1B", "5", "2A", "2B"],
